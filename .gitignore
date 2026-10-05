@@ -1,48 +1,122 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# ==============================================================================
+# 1. GLOBAL & ENVIRONMENT RULES (CRITICAL SECURITY)
+# ==============================================================================
+# Ignore all secrets and environment files across the entire monorepo
+.env
+.env.*
+!.env.example
+
+# Security Keys, Certificates, and Keystores
+*.pem
+*.key
+*.keystore
+*.jks
+mobile/android/key.properties
+
+# Operating System Files
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+
+# ==============================================================================
+# 2. IDEs & WORKSPACE SETTINGS
+# ==============================================================================
+# IntelliJ IDEA
 .idea/
+*.iml
+*.iws
+*.ipr
+out/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
 
-# Flutter/Dart/Pub related
+# Eclipse / STS / NetBeans
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+/nbproject/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+
+
+
+# BACKEND (SPRING BOOT / KOTLIN / MAVEN & GRADLE)
+# Ignore HELP.md anywhere in backend
+**/HELP.md
+
+# Ignore local execution properties anywhere in backend
+**/application-local.properties
+**/application-*.properties
+!**/application-dev.properties
+!**/application-prod.properties
+
+# Build & Target folders anywhere in backend
+**/target/
+**/build/
+**/.gradle/
+**/.kotlin/
+**/bin/
+**/*.log
+
+# Maven Wrapper JAR
+**/.mvn/wrapper/maven-wrapper.jar
+
+
+
+# 4. MOBILE (FLUTTER / DART)
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/build/
+**/coverage/
 **/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+**/.widget_preview/
 
-# Symbolication related
-app.*.symbols
+# Symbolication & Obfuscation output
+mobile/app.*.symbols
+mobile/app.*.map.json
 
-# Obfuscation related
-app.*.map.json
+# --- Android Specific ---
+mobile/android/.gradle/
+mobile/android/captures/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# --- iOS / macOS Specific ---
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/.last_build_id
+mobile/ios/DerivedData/
+mobile/ios/*.xcworkspace
 
-# Widget Preview related
-.widget_preview/
+
+
+# 5. LOCAL INFRASTRUCTURE & PERSISTENCE
+postgres_data/
+redis_data/
+docker_data/
+*.db
+*.sqlite
