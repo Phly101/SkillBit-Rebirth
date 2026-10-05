@@ -1,0 +1,77 @@
+extend type Query {
+  levels: [Level!]!
+  level(id: ID!): Level
+  course(id: ID!): Course
+  "Course search. Also usable as a plain filtered list (omit `search`)."
+  courses(search: String, levelId: ID, first: Int = 20, after: String): CourseConnection!
+}
+
+type Level {
+  id: ID!
+  order: Int!
+  name: String!
+  isUnlocked: Boolean!
+  courses(first: Int = 20, after: String): CourseConnection!
+}
+
+type Course {
+  id: ID!
+  title: String!
+  summary: String!
+  imageUrl: String
+  "Mandatory courses must reach 100% to unlock the next level. Optional ones never do."
+  isMandatory: Boolean!
+  lessonCount: Int!
+  level: Level!
+  "Request on the details screen only; the preview card does not need it."
+  sections: [Section!]!
+  "Null if the user is not enrolled."
+  myProgress: Progress
+  "Roadmaps on roadmap.sh that this course belongs to. Empty means no roadmap button."
+  roadmaps: [Roadmap!]!
+}
+
+"A roadmap hosted on roadmap.sh. We only link to it, we do not maintain it."
+type Roadmap {
+  "roadmap.sh's own name for it, for example `backend`."
+  slug: String!
+  title: String!
+  "Built by the backend from the slug, so a URL change on their side is a one-place fix."
+  url: String!
+}
+
+type Section {
+  id: ID!
+  title: String!
+  order: Int!
+  lessons: [Lesson!]!
+  "Quiz with questions from all the lessons in this section."
+  quiz: Quiz
+}
+
+type Lesson {
+  id: ID!
+  title: String!
+  order: Int!
+  description: String!
+  "At least one of videoUrl and articleUrl is always set."
+  videoUrl: String
+  articleUrl: String
+  isCompleted: Boolean!
+}
+
+type Progress {
+  completedLessons: Int!
+  totalLessons: Int!
+  percent: Int!
+}
+
+type CourseConnection {
+  edges: [CourseEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CourseEdge {
+  cursor: String!
+  node: Course!
+}

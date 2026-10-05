@@ -1,0 +1,53 @@
+extend type Query {
+  friendMatch(id: ID!): FriendMatch
+  "The allowed ranges for the settings a host can pick. Configured on the server."
+  friendMatchLimits: FriendMatchLimits!
+  "Topics that have questions in the contest pool, for the host to choose from."
+  matchTopics: [Topic!]!
+}
+
+type FriendMatchLimits {
+  minQuestions: Int!
+  maxQuestions: Int!
+  minTimeLimitSeconds: Int!
+  maxTimeLimitSeconds: Int!
+}
+
+type FriendConnection {
+  edges: [FriendEdge!]!
+  pageInfo: PageInfo!
+}
+
+type FriendEdge {
+  cursor: String!
+  node: User!
+  "When the friendship started (belongs to the relationship, not the user)."
+  since: DateTime!
+}
+
+type FriendRequest {
+  id: ID!
+  from: User!
+  createdAt: DateTime!
+}
+
+"A 1v1 friendly contest. Highest score wins."
+type FriendMatch {
+  id: ID!
+  status: FriendMatchStatus!
+  "The other player, from the logged-in user's point of view."
+  opponent: User!
+  "The set of questions the server picked from the contest pool for this match."
+  quiz: Quiz!
+  "What the host chose."
+  topics: [Topic!]!
+  questionCount: Int!
+  timeLimitSeconds: Int!
+  expiresAt: DateTime!
+  "Null until I have finished."
+  myScore: Int
+  "Null until both players have finished, so nobody can peek."
+  opponentScore: Int
+  "Null until finished, and null on a tie."
+  winner: User
+}

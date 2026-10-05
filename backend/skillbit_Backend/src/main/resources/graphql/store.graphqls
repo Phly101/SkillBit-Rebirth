@@ -1,0 +1,43 @@
+extend type Query {
+  "The store catalog. `isOwned` is relative to the logged-in user. Small list for now; paginate if it grows."
+  storeItems(type: CosmeticType): [CosmeticItem!]!
+}
+
+enum CosmeticType {
+  AVATAR_FRAME
+  PROFILE_THEME
+  BADGE_SKIN
+  TITLE
+}
+
+enum CosmeticUnlock {
+  "Bought with Google Play Billing."
+  PURCHASE
+  "Granted for donating through the tip jar."
+  DONATION
+  "Granted for earning all achievements and badges."
+  ALL_ACHIEVEMENTS
+}
+
+type CosmeticItem {
+  id: ID!
+  name: String!
+  description: String!
+  type: CosmeticType!
+  "How the item is obtained. The store screen uses it to show the right call to action."
+  unlock: CosmeticUnlock!
+  "Remote asset: an SVG frame, a theme config JSON and so on. Versioned in the URL, like avatars."
+  assetUrl: String!
+  "Google Play product ID as configured in RevenueCat. The app reads the localized price from the store SDK, so no price lives here. Null unless `unlock` is PURCHASE. DONATION items are granted by any donation, so they have no product of their own."
+  storeProductId: String
+  "Whether the logged-in user owns it. On someone else's equipped items this still describes the viewer."
+  isOwned: Boolean!
+}
+
+"What a user has equipped right now, one item per slot. Null means the slot is empty."
+type EquippedCosmetics {
+  avatarFrame: CosmeticItem
+  profileTheme: CosmeticItem
+  badgeSkin: CosmeticItem
+  title: CosmeticItem
+}

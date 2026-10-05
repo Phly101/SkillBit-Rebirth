@@ -1,0 +1,42 @@
+ extend type Query {
+  contest(id: ID!): Contest
+  contests(status: ContestStatus, first: Int = 20, after: String): ContestConnection!
+}
+
+enum ParticipationStatus {
+  "Contests are locked until the user has finished level 1."
+  LOCKED
+  NOT_ENROLLED
+  ENROLLED
+  IN_PROGRESS
+  "Submitted, but the contest is still running. No access to the questions."
+  SUBMITTED
+  "The contest has ended and results are final."
+  RESULT_READY
+}
+
+type Contest {
+  id: ID!
+  title: String!
+  status: ContestStatus!
+  startsAt: DateTime!
+  endsAt: DateTime!
+  "Where the logged-in user is in this contest's flow. Drives which screen the app shows."
+  myStatus: ParticipationStatus!
+  "Set once the user has started an attempt. Use it to open the results page."
+  myAttemptId: ID
+  participantCount: Int!
+  quiz: Quiz!
+  "Tags of the contest, drawn from all three levels. Contests have tags but no difficulty."
+  topics: [Topic!]!
+}
+
+type ContestConnection {
+  edges: [ContestEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ContestEdge {
+  cursor: String!
+  node: Contest!
+}

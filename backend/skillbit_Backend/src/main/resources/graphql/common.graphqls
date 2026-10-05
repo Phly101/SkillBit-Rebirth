@@ -1,0 +1,25 @@
+# Shared scalars, enums and pagination types.
+# This schema is queries only: commands go through REST, live updates through the socket
+# (see Docs/api/README.md).
+
+# On the Spring side register ExtendedScalars.DateTime (graphql-java-extended-scalars).
+scalar DateTime
+
+enum ContestStatus {
+  UPCOMING
+  LIVE
+  ENDED
+}
+
+enum FriendMatchStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  FINISHED
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}

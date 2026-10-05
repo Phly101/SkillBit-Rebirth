@@ -1,0 +1,19 @@
+extend type Query {
+  quiz(id: ID!): Quiz
+}
+
+# Deliberately has no questions and no answers. Questions are returned by
+# POST /quizzes/{id}/attempts (REST), correct answers by GET /attempts/{id}/review after submit.
+type Quiz {
+  id: ID!
+  title: String!
+  questionCount: Int!
+  "Null means untimed."
+  timeLimitSeconds: Int
+  topics: [Topic!]!
+  "The percentage that counts for this user: the best attempt once the quiz is passed, otherwise the latest attempt. Null if never attempted."
+  myPercent: Int
+  myAttemptCount: Int!
+  "For a section quiz: true once some attempt reached at least 75% correct answers, and it never goes back. Completed quizzes count toward course progress."
+  isCompleted: Boolean!
+}

@@ -1,0 +1,135 @@
+# This file owns `type Query`; the other files add to it with `extend type Query`.
+type Query {
+    "The logged-in user. Private data lives here, never on User."
+    me: Me!
+    user(id:ID!):User
+    "Find users by name, for adding friends. `relationship` on each result tells the UI which button to show."
+    searchUsers(query: String!, first: Int = 20, after: String): UserConnection!
+    "All five badges in order, for the ranks screen."
+    badgeLadder: [Badge!]!
+}
+
+"The logged-in user's own view of themselves (private)."
+type Me {
+    id: ID!
+    name: String!
+    avatarUrl: String
+    points: Int!
+    "Current badge. Every user always holds exactly one."
+    badge: Badge!
+    "Next badge up the ladder. Null at the top tier."
+    nextBadge: Badge
+    "Points still needed to reach nextBadge. Null at the top tier."
+    pointsToNextBadge: Int
+    "Equipped cosmetics, one per slot."
+    cosmetics: EquippedCosmetics!
+    "Everything the user owns, for an inventory screen."
+    ownedCosmetics: [CosmeticItem!]!
+    "True once the user has made a supporter purchase (the tip jar)."
+    isSupporter: Boolean!
+    achievements: [Achievement!]!
+    weakTopics: [WeakTopic!]!
+    recentAchievements(first: Int = 5): [Achievement!]!
+    "One point per finished contest, oldest first. Omit `last` for the whole history."
+    growth(last: Int): [GrowthPoint!]!
+    friends(first: Int = 20, after: String): FriendConnection!
+    friendRequests: [FriendRequest!]!
+}
+
+"What any other user is allowed to see about someone."
+type User {
+    id: ID!
+    name: String!
+    avatarUrl: String
+    badge: Badge!
+    points: Int!
+    cosmetics: EquippedCosmetics!
+    isSupporter: Boolean!
+    "Lets the profile screen show the right button (Add, Remove, Pending)."
+    relationship: Relationship!
+    recentAchievements(first: Int = 5): [Achievement!]!
+    "One point per finished contest, oldest first. Omit `last` for the whole history."
+    growth(last: Int): [GrowthPoint!]!
+    courseProgress(first: Int = 20, after: String): CourseProgressConnection!
+}
+
+"One rung of the five-badge ladder. Names, icons and thresholds are data, not code."
+type Badge {
+    id: ID!
+    name: String!
+    iconUrl: String!
+    "1 is the lowest badge, 5 the highest. Not the same thing as leaderboard rank."
+    tier: Int!
+    "Points needed to be promoted to this badge."
+    minPoints: Int!
+}
+
+type Achievement {
+    id: ID!
+    title: String!
+    description: String!
+    iconUrl: String!
+    "Null means still locked."
+    earnedAt: DateTime
+}
+
+"A tag on quiz questions. Drives the weak-point detector."
+type Topic {
+    id: ID!
+    name: String!
+}
+
+type WeakTopic {
+    topic: Topic!
+    "0.0 to 1.0"
+    accuracy: Float!
+    suggestedLessons: [Lesson!]!
+}
+enum Relationship { SELF NONE FRIEND REQUEST_SENT REQUEST_RECEIVED }
+enum BadgeDirection { PROMOTED DEMOTED }
+
+"""
+One point on the growth graph. Created only when a contest result is applied (like Codeforces).
+Quizzes and courses also award points, but they do not create graph points of their own.
+"""
+type GrowthPoint {
+    contest: Contest!
+    "When the result was applied."
+    date: DateTime!
+    "Placement in that contest (1 = first)."
+    rank: Int!
+    "Points change from this contest alone. Negative when the user did badly."
+    delta: Int!
+    "The user's total points after this contest (the value to plot). Includes any quiz or course points earned since the previous graph point."
+    points: Int!
+    "Badge held after this contest."
+    badge: Badge!
+    "Set only when this point's badge differs from the previous graph point's badge."
+    badgeChange: BadgeDirection
+}
+
+"One enrolled course and how far this user is in it."
+type CourseProgress {
+    course: Course!
+    progress: Progress!
+}
+
+type CourseProgressConnection {
+    edges: [CourseProgressEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CourseProgressEdge {
+    cursor: String!
+    node: CourseProgress!
+}
+
+type UserConnection {
+    edges: [UserEdge!]!
+    pageInfo: PageInfo!
+}
+
+type UserEdge {
+    cursor: String!
+    node: User!
+}
