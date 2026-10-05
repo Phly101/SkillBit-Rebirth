@@ -1,0 +1,871 @@
+openapi: 3.0.3
+info:
+  title: SkillBit-Rebirth REST API
+  version: 1.0.0
+  description: |
+    Commands and explicit actions only. Reads go through GraphQL and live updates arrive over the
+    WebSocket (see README.md and events.md in this folder).
+    Operations tagged [proposed] in their summary are not from the original design notes and need confirming.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: [ ]
+tags:
+  - name: Auth
+  - name: Account
+  - name: Courses
+  - name: Contests
+  - name: Attempts
+  - name: Friends
+  - name: Matches
+  - name: Cosmetics
+  - name: Payments
+
+paths:
+  # ---------------------------------------------------------------- Auth
+  /auth/signup:
+    post:
+      operationId: signup
+      tags: [ Auth ]
+      security: [ ]
+      summary: Create an account and send a verification OTP
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SignupRequest' } } } }
+      responses:
+        '202': { description: 'Account created, OTP sent', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /auth/login:
+    post:
+      operationId: login
+      tags: [ Auth ]
+      security: [ ]
+      summary: Log in with email and password
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } } } }
+      responses:
+        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/google:
+    post:
+      operationId: loginWithGoogle
+      tags: [ Auth ]
+      security: [ ]
+      summary: Sign in with Google (exchange an ID token)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GoogleLoginRequest' } } } }
+      responses:
+        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/github:
+    post:
+      operationId: loginWithGithub
+      tags: [ Auth ]
+      security: [ ]
+      summary: Sign in with GitHub (exchange an authorization code)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GithubLoginRequest' } } } }
+      responses:
+        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/otp/send:
+    post:
+      operationId: sendOtp
+      tags: [ Auth ]
+      security: [ ]
+      summary: Send an OTP
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OtpRequest' } } } }
+      responses:
+        '202': { description: 'OTP sent', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/otp/resend:
+    post:
+      operationId: resendOtp
+      tags: [ Auth ]
+      security: [ ]
+      summary: Resend an OTP (rate limited)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/OtpRequest' } } } }
+      responses:
+        '202': { description: 'OTP sent', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/verify:
+    post:
+      operationId: verifyOtp
+      tags: [ Auth ]
+      security: [ ]
+      summary: Verify an OTP
+      description: |
+        Result depends on `purpose`. SIGNUP returns tokens, PASSWORD_RESET returns a `resetToken`
+        to use with /auth/reset-password, EMAIL_CHANGE confirms the new email and returns nothing extra.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/VerifyOtpRequest' } } } }
+      responses:
+        '200': { description: 'Verified', content: { application/json: { schema: { $ref: '#/components/schemas/VerifyOtpResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [ Auth ]
+      security: [ ]
+      summary: Start a password reset
+      description: Always answers 202, whether or not the email exists, so accounts cannot be enumerated.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ForgotPasswordRequest' } } } }
+      responses:
+        '202': { description: 'If the account exists an OTP was sent', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [ Auth ]
+      security: [ ]
+      summary: '[proposed] Finish a password reset'
+      description: Completes the forgot-password flow with the `resetToken` returned by /auth/verify.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ResetPasswordRequest' } } } }
+      responses:
+        '204': { description: 'Password changed' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /auth/refresh:
+    post:
+      operationId: refreshTokens
+      tags: [ Auth ]
+      security: [ ]
+      summary: '[proposed] Rotate tokens'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RefreshRequest' } } } }
+      responses:
+        '200': { description: 'New tokens', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [ Auth ]
+      summary: Revoke the refresh token
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RefreshRequest' } } } }
+      responses:
+        '204': { description: 'Logged out' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ------------------------------------------------------------- Account
+  /me/profile:
+    patch:
+      operationId: updateProfile
+      tags: [ Account ]
+      summary: Change name
+      description: On success the server emits a `profile.updated` socket event.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateProfileRequest' } } } }
+      responses:
+        '200': { description: 'Updated', content: { application/json: { schema: { $ref: '#/components/schemas/ProfileResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /me/avatar:
+    put:
+      operationId: updateAvatar
+      tags: [ Account ]
+      summary: Upload a new profile image
+      description: |
+        The server stores the file, bumps the avatar version and emits `profile.updated` with the new
+        versioned URL. Allowed types: JPEG, PNG, WebP. Maximum size: 5 MB (adjust as needed).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ file ]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200': { description: 'Updated', content: { application/json: { schema: { $ref: '#/components/schemas/AvatarResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+  /me/email-change:
+    post:
+      operationId: requestEmailChange
+      tags: [ Account ]
+      summary: Request an email change
+      description: Sends an OTP to the new address. Confirm it with /auth/verify using purpose EMAIL_CHANGE.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EmailChangeRequest' } } } }
+      responses:
+        '202': { description: 'OTP sent to the new address', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /me/password-change:
+    post:
+      operationId: changePassword
+      tags: [ Account ]
+      summary: Change password
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PasswordChangeRequest' } } } }
+      responses:
+        '204': { description: 'Password changed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  # ------------------------------------------------------------- Courses
+  /courses/{courseId}/enroll:
+    post:
+      operationId: enrollInCourse
+      tags: [ Courses ]
+      summary: Enroll in a course
+      description: Idempotent. Enrolling twice is not an error.
+      parameters: [ { $ref: '#/components/parameters/CourseId' } ]
+      responses:
+        '204': { description: 'Enrolled' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /lessons/{lessonId}/complete:
+    post:
+      operationId: completeLesson
+      tags: [ Courses ]
+      summary: Mark a lesson as completed
+      description: |
+        Idempotent. Requires enrollment in the lesson course (403 otherwise). Emits `progress.updated`.
+        Progress counts lessons and section quizzes. When this brings it to 100% the course finishes
+        automatically: the server awards the course points, emits `course.finished` and, if every mandatory
+        course of the level is done, unlocks the next level.
+      parameters: [ { $ref: '#/components/parameters/LessonId' } ]
+      responses:
+        '204': { description: 'Completed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ------------------------------------------------------------ Contests
+  /contests/{contestId}/enroll:
+    post:
+      operationId: enrollInContest
+      tags: [ Contests ]
+      summary: Enroll in a contest
+      description: Contests are locked until the user has finished level 1 (every mandatory course of the level at 100%). Until then this returns 403.
+      parameters: [ { $ref: '#/components/parameters/ContestId' } ]
+      responses:
+        '204': { description: 'Enrolled' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /contests/{contestId}/leaderboard:
+    get:
+      operationId: getContestLeaderboard
+      tags: [ Contests ]
+      summary: Leaderboard snapshot
+      description: Initial snapshot. Live changes arrive through `leaderboard.updated` after a `leaderboard.subscribe`.
+      parameters:
+        - { $ref: '#/components/parameters/ContestId' }
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200': { description: 'Leaderboard page', content: { application/json: { schema: { $ref: '#/components/schemas/LeaderboardPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ------------------------------------------------------------ Attempts
+  /quizzes/{quizId}/attempts:
+    post:
+      operationId: startQuizAttempt
+      tags: [ Attempts ]
+      summary: Start a quiz
+      parameters: [ { $ref: '#/components/parameters/QuizId' } ]
+      responses:
+        '201': { description: 'Attempt started', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptStarted' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /contests/{contestId}/attempts:
+    post:
+      operationId: startContestAttempt
+      tags: [ Attempts ]
+      summary: Start a contest
+      description: Requires enrollment and the contest to be LIVE. One attempt per user. Once it has been submitted, starting again returns 409 because the questions are no longer available while the contest keeps running. While an attempt is still in progress, starting again resumes it and returns the same questions in the same order, with `savedAnswers`.
+      parameters: [ { $ref: '#/components/parameters/ContestId' } ]
+      responses:
+        '200': { description: 'Attempt in progress resumed', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptStarted' } } } }
+        '201': { description: 'Attempt started', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptStarted' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /friend-matches/{matchId}/attempts:
+    post:
+      operationId: startMatchAttempt
+      tags: [ Attempts ]
+      summary: '[proposed] Play your side of a friendly match'
+      description: Both players get the same questions. Only available after the challenge was accepted. Friendly matches award no points.
+      parameters: [ { $ref: '#/components/parameters/MatchId' } ]
+      responses:
+        '201': { description: 'Attempt started', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptStarted' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /attempts/{attemptId}/submit:
+    post:
+      operationId: submitAttempt
+      tags: [ Attempts ]
+      summary: Submit a quiz, contest or match attempt
+      description: |
+        The first close wins. Once an attempt is closed, either by this call or by the server at `expiresAt`
+        using the saved answers, every further submit returns 409 ATTEMPT_CLOSED and the app fetches the
+        results instead. The server clock is authoritative: the countdown in the app is only a display.
+        Quizzes and matches get a FINAL result immediately, including `weakTopics`.
+        Passing a section quiz (at least 75% correct in that attempt) counts toward course progress and can finish the course (`course.finished`). Quizzes award no points themselves.
+        Contest attempts get a PENDING result: the score is known, but rank, points and weak topics are
+        null until the contest ends. The contest keeps running and the questions can no longer be opened.
+        When it ends, points, badge and rank changes are pushed over the socket, followed by `contest.results_ready`.
+      parameters: [ { $ref: '#/components/parameters/AttemptId' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SubmitAttemptRequest' } } } }
+      responses:
+        '200': { description: 'Result', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptResult' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /attempts/{attemptId}/answers/{questionId}:
+    put:
+      operationId: saveAnswer
+      tags: [ Attempts ]
+      summary: '[proposed] Save an answer as the user goes (autosave)'
+      description: |
+        Call it every time the user changes an answer. It overwrites the previous answer for that question
+        and grades nothing. If the attempt is never submitted (the user went idle, lost connection or the
+        app was killed), the server closes it at `expiresAt` using the saved answers.
+      parameters:
+        - { $ref: '#/components/parameters/AttemptId' }
+        - { $ref: '#/components/parameters/QuestionId' }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AnswerValue' } } } }
+      responses:
+        '204': { description: 'Saved' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /attempts/{attemptId}/restart:
+    post:
+      operationId: restartAttempt
+      tags: [ Attempts ]
+      summary: Restart a quiz
+      description: Quizzes only. Contest and match attempts cannot be restarted (409).
+      parameters: [ { $ref: '#/components/parameters/AttemptId' } ]
+      responses:
+        '201': { description: 'New attempt started', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptStarted' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /attempts/{attemptId}/results:
+    get:
+      operationId: getAttemptResults
+      tags: [ Attempts ]
+      summary: Results of a submitted attempt
+      description: For a contest attempt this returns status PENDING until the contest ends, then FINAL with rank, points and weak topics.
+      parameters: [ { $ref: '#/components/parameters/AttemptId' } ]
+      responses:
+        '200': { description: 'Result', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptResult' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /attempts/{attemptId}/review:
+    get:
+      operationId: reviewAttempt
+      tags: [ Attempts ]
+      summary: Review answers with the correct answers and explanations
+      description: Only after submit. For contests, only once the contest has ended (403 before that).
+      parameters: [ { $ref: '#/components/parameters/AttemptId' } ]
+      responses:
+        '200': { description: 'Review', content: { application/json: { schema: { $ref: '#/components/schemas/AttemptReview' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------- Friends
+  /friends:
+    post:
+      operationId: addFriend
+      tags: [ Friends ]
+      summary: Send a friend request
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AddFriendRequest' } } } }
+      responses:
+        '201': { description: 'Request sent', content: { application/json: { schema: { $ref: '#/components/schemas/FriendRequestCreated' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /friends/{userId}:
+    delete:
+      operationId: removeFriend
+      tags: [ Friends ]
+      summary: Remove a friend
+      parameters: [ { $ref: '#/components/parameters/UserId' } ]
+      responses:
+        '204': { description: 'Removed' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /friend-requests/{requestId}/accept:
+    post:
+      operationId: acceptFriendRequest
+      tags: [ Friends ]
+      summary: '[proposed] Accept a friend request'
+      parameters: [ { $ref: '#/components/parameters/RequestId' } ]
+      responses:
+        '204': { description: 'Accepted' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /friend-requests/{requestId}/decline:
+    post:
+      operationId: declineFriendRequest
+      tags: [ Friends ]
+      summary: '[proposed] Decline a friend request'
+      parameters: [ { $ref: '#/components/parameters/RequestId' } ]
+      responses:
+        '204': { description: 'Declined' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ------------------------------------------------------------- Matches
+  /friends/{userId}/challenge:
+    post:
+      operationId: challengeFriend
+      tags: [ Matches ]
+      summary: Challenge a friend to a 1v1 friendly contest
+      description: |
+        The host chooses the topics, the number of questions and the time limit, within limits configured on
+        the server (available in GraphQL as `friendMatchLimits`). The server picks a random set of questions
+        from the contest pool for those topics, the same set for both players. Returns 422 if a setting is
+        outside the limits or the topics do not have enough questions.
+      parameters: [ { $ref: '#/components/parameters/UserId' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ChallengeRequest' } } } }
+      responses:
+        '201': { description: 'Challenge sent', content: { application/json: { schema: { $ref: '#/components/schemas/FriendMatchCreated' } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /friend-matches/{matchId}/accept:
+    post:
+      operationId: acceptMatch
+      tags: [ Matches ]
+      summary: '[proposed] Accept a challenge'
+      parameters: [ { $ref: '#/components/parameters/MatchId' } ]
+      responses:
+        '200': { description: 'Accepted', content: { application/json: { schema: { $ref: '#/components/schemas/FriendMatchCreated' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /friend-matches/{matchId}/decline:
+    post:
+      operationId: declineMatch
+      tags: [ Matches ]
+      summary: '[proposed] Decline a challenge'
+      parameters: [ { $ref: '#/components/parameters/MatchId' } ]
+      responses:
+        '204': { description: 'Declined' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------ Cosmetics
+  /me/cosmetics/{type}:
+    put:
+      operationId: equipCosmetic
+      tags: [ Cosmetics ]
+      summary: '[proposed] Equip an owned cosmetic in a slot'
+      description: |
+        The server checks that the user owns the item and that the item belongs to this slot.
+        On success it emits `profile.updated` so other screens and other users' sessions update.
+      parameters: [ { $ref: '#/components/parameters/CosmeticTypeParam' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/EquipCosmeticRequest' } } } }
+      responses:
+        '200': { description: 'Equipped', content: { application/json: { schema: { $ref: '#/components/schemas/EquippedCosmeticIds' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      operationId: unequipCosmetic
+      tags: [ Cosmetics ]
+      summary: '[proposed] Empty a slot'
+      parameters: [ { $ref: '#/components/parameters/CosmeticTypeParam' } ]
+      responses:
+        '200': { description: 'Unequipped', content: { application/json: { schema: { $ref: '#/components/schemas/EquippedCosmeticIds' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ------------------------------------------------------------- Payments
+  /payments/revenuecat-webhook:
+    post:
+      operationId: revenueCatWebhook
+      tags: [ Payments ]
+      security:
+        - webhookAuth: [ ]
+      summary: '[proposed] Purchase notifications from RevenueCat (called by RevenueCat, never by the app)'
+      description: |
+        Authenticated with a shared secret that is configured in the RevenueCat dashboard and sent in the
+        Authorization header. Compare it in constant time. No user JWT is involved.
+
+        Handled events: NON_RENEWING_PURCHASE grants the item (or the supporter mark) and CANCELLATION
+        covers refunds (the item is removed from the inventory and unequipped, and `cancel_reason` tells a refund apart from other cancellations). TEST and every other type
+        are acknowledged and ignored.
+
+        Idempotent: RevenueCat retries reuse the same `event.id`, so a repeated event or transaction must
+        change nothing and still answer 200. Answer quickly with 2xx, because non-2xx responses are retried.
+        After the change commits, the server emits `inventory.updated` over the socket.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RevenueCatWebhook' } } } }
+      responses:
+        '200': { description: 'Acknowledged (processed, duplicate or ignored)' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    webhookAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Shared secret for the RevenueCat webhook only'
+
+  parameters:
+    CourseId: { name: courseId,  in: path, required: true, schema: { type: string } }
+    ContestId: { name: contestId, in: path, required: true, schema: { type: string } }
+    QuizId: { name: quizId,    in: path, required: true, schema: { type: string } }
+    AttemptId: { name: attemptId, in: path, required: true, schema: { type: string } }
+    MatchId: { name: matchId,   in: path, required: true, schema: { type: string } }
+    UserId: { name: userId,    in: path, required: true, schema: { type: string } }
+    RequestId: { name: requestId, in: path, required: true, schema: { type: string } }
+    CosmeticTypeParam: { name: type, in: path, required: true, schema: { $ref: '#/components/schemas/CosmeticType' } }
+    QuestionId: { name: questionId, in: path, required: true, schema: { type: string } }
+    LessonId: { name: lessonId, in: path, required: true, schema: { type: string } }
+    Limit: { name: limit,  in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    Cursor: { name: cursor, in: query, schema: { type: string } }
+
+  responses:
+    BadRequest: { description: 'Malformed or invalid request, for example a wrong OTP', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthorized: { description: 'Missing, expired or invalid token', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Forbidden: { description: 'Authenticated but not allowed, for example not enrolled or email not verified', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: 'Resource does not exist', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: 'State conflict, for example email taken or attempt already submitted', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    PayloadTooLarge: { description: 'Upload exceeds the size limit', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    UnsupportedMediaType: { description: 'File type not allowed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    ValidationError: { description: 'Request body failed validation', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    TooManyRequests: { description: 'Rate limit hit', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  schemas:
+    Error:
+      type: object
+      required: [ code, message ]
+      properties:
+        code: { type: string, example: QUIZ_ALREADY_SUBMITTED, description: 'Stable machine-readable code' }
+        message: { type: string, description: 'Human-readable, may change' }
+        details: { type: object, additionalProperties: true }
+
+    # ---- auth
+    SignupRequest:
+      type: object
+      required: [ name, email, password ]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 50 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 72, format: password }
+    LoginRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    GoogleLoginRequest:
+      type: object
+      required: [ idToken ]
+      properties:
+        idToken: { type: string }
+    GithubLoginRequest:
+      type: object
+      required: [ code ]
+      properties:
+        code: { type: string }
+    OtpPurpose:
+      type: string
+      enum: [ SIGNUP, PASSWORD_RESET, EMAIL_CHANGE ]
+    OtpRequest:
+      type: object
+      required: [ email, purpose ]
+      properties:
+        email: { type: string, format: email }
+        purpose: { $ref: '#/components/schemas/OtpPurpose' }
+    OtpSent:
+      type: object
+      required: [ resendAfterSeconds ]
+      properties:
+        resendAfterSeconds: { type: integer, example: 60 }
+    VerifyOtpRequest:
+      type: object
+      required: [ email, otp, purpose ]
+      properties:
+        email: { type: string, format: email }
+        otp: { type: string, pattern: '^[0-9]{6}$' }
+        purpose: { $ref: '#/components/schemas/OtpPurpose' }
+    VerifyOtpResponse:
+      type: object
+      properties:
+        tokens: { allOf: [ { $ref: '#/components/schemas/TokenPair' } ], description: 'Present for SIGNUP' }
+        resetToken: { type: string, description: 'Present for PASSWORD_RESET' }
+    ForgotPasswordRequest:
+      type: object
+      required: [ email ]
+      properties:
+        email: { type: string, format: email }
+    ResetPasswordRequest:
+      type: object
+      required: [ resetToken, newPassword ]
+      properties:
+        resetToken: { type: string }
+        newPassword: { type: string, minLength: 8, maxLength: 72, format: password }
+    RefreshRequest:
+      type: object
+      required: [ refreshToken ]
+      properties:
+        refreshToken: { type: string }
+    TokenPair:
+      type: object
+      required: [ accessToken, refreshToken, expiresInSeconds ]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresInSeconds: { type: integer, example: 900 }
+
+    # ---- account
+    UpdateProfileRequest:
+      type: object
+      required: [ name ]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 50 }
+    ProfileResponse:
+      type: object
+      required: [ userId, name ]
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        avatarUrl: { type: string, nullable: true }
+    AvatarResponse:
+      type: object
+      required: [ avatarUrl ]
+      properties:
+        avatarUrl: { type: string, example: 'https://cdn.example.com/avatars/42_v8.jpg', description: 'Versioned, so caches pick up the new image' }
+    EmailChangeRequest:
+      type: object
+      required: [ newEmail, password ]
+      properties:
+        newEmail: { type: string, format: email }
+        password: { type: string, format: password, description: 'Current password, to confirm identity' }
+    PasswordChangeRequest:
+      type: object
+      required: [ currentPassword, newPassword ]
+      properties:
+        currentPassword: { type: string, format: password }
+        newPassword: { type: string, minLength: 8, maxLength: 72, format: password }
+
+    # ---- courses
+    # ---- attempts
+    Option:
+      type: object
+      required: [ id, text ]
+      properties:
+        id: { type: string }
+        text: { type: string }
+    QuestionType:
+      type: string
+      enum: [ MULTIPLE_CHOICE, PARSONS ]
+    CodeBlock:
+      type: object
+      required: [ id, code ]
+      properties:
+        id: { type: string, description: 'Opaque. Neither the ID nor the position in the array reveals the correct order.' }
+        code: { type: string, description: 'One block of code, usually one or a few lines' }
+        indent: { type: integer, minimum: 0, description: 'Display only: how far the block is indented in the final code. Arranging blocks only changes their order.' }
+    Question:
+      type: object
+      required: [ id, type, difficulty, text ]
+      properties:
+        id: { type: string }
+        type: { $ref: '#/components/schemas/QuestionType' }
+        text: { type: string }
+        difficulty: { type: string, enum: [ EASY, MEDIUM, HARD ], description: 'EASY is worth 1 base point, MEDIUM 3 and HARD 5' }
+        language: { type: string, nullable: true, example: dart, description: 'For syntax highlighting of code in the question' }
+        options:
+          type: array
+          description: 'MULTIPLE_CHOICE only'
+          items: { $ref: '#/components/schemas/Option' }
+        blocks:
+          type: array
+          description: 'PARSONS only. Shuffled by the server, stable for a given attempt. May include distractor blocks that do not belong in the solution.'
+          items: { $ref: '#/components/schemas/CodeBlock' }
+    AttemptStarted:
+      type: object
+      required: [ attemptId, kind, startedAt, questions ]
+      properties:
+        attemptId: { type: string }
+        kind: { type: string, enum: [ QUIZ, CONTEST, FRIEND_MATCH ] }
+        startedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time, nullable: true, description: 'Null for untimed quizzes. For contests, the earlier of the time limit and the contest end.' }
+        questions: { type: array, items: { $ref: '#/components/schemas/Question' } }
+        savedAnswers:
+          type: array
+          description: 'Present when an attempt in progress is resumed: what the user had answered so far'
+          items: { $ref: '#/components/schemas/Answer' }
+    AnswerValue:
+      type: object
+      description: 'Send the field that matches the question type. The other field must be absent, otherwise 422.'
+      properties:
+        selectedOptionId: { type: string, nullable: true, description: 'MULTIPLE_CHOICE. Null means skipped.' }
+        orderedBlockIds:
+          type: array
+          nullable: true
+          description: 'PARSONS. The IDs of the blocks the user used, in the order they arranged them. Blocks left out count as unused. Null or empty means skipped.'
+          items: { type: string }
+    Answer:
+      allOf:
+        - { $ref: '#/components/schemas/AnswerValue' }
+        - type: object
+          required: [ questionId ]
+          properties:
+            questionId: { type: string }
+    SubmitAttemptRequest:
+      type: object
+      properties:
+        answers:
+          type: array
+          description: 'Optional. Answers listed here override anything saved earlier. Questions left out use the saved answer, or count as skipped if there is none.'
+          items: { $ref: '#/components/schemas/Answer' }
+    WeakTopic:
+      type: object
+      required: [ topicId, name, accuracy, suggestedLessonIds ]
+      properties:
+        topicId: { type: string }
+        name: { type: string }
+        accuracy: { type: number, minimum: 0, maximum: 1 }
+        suggestedLessonIds: { type: array, items: { type: string } }
+    AttemptResult:
+      type: object
+      required: [ attemptId, status, score, maxScore, points, pointsAwarded, rank, timeSeconds, completedAt, weakTopics ]
+      properties:
+        attemptId: { type: string }
+        status:
+          type: string
+          enum: [ PENDING, FINAL ]
+          description: 'PENDING only for contest attempts while the contest is still running. Quizzes and matches are always FINAL.'
+        score: { type: integer, description: 'Correct answers. Known as soon as the attempt is submitted.' }
+        maxScore: { type: integer, description: 'Number of questions' }
+        points: { type: integer, nullable: true, description: 'Contests only: points from the questions with the badge tier modifiers and penalties (can be negative), rounded once to whole points. Known at submit, before the top-3 bonus, and it is what ranks the user. Null for quizzes and matches, which award no points.' }
+        pointsAwarded: { type: integer, nullable: true, description: 'Contests: what was actually added to the total, after the top-3 bonus. Null while PENDING. Always 0 for quizzes and friendly matches.' }
+        timeSeconds: { type: integer, description: 'How long the attempt took, from start to close. Breaks ties between equal contest points.' }
+        rank: { type: integer, minimum: 1, nullable: true, description: 'Final contest placement. Null for quizzes and matches, and while PENDING.' }
+        passed: { type: boolean, nullable: true, description: 'Quizzes only: true if this attempt reached at least 75% correct answers, so the quiz counts as completed. Every attempt is judged on its own. Null for contests and matches.' }
+        completedAt: { type: string, format: date-time, description: 'When the user submitted' }
+        weakTopics:
+          type: array
+          nullable: true
+          description: 'Null while PENDING (an empty list would wrongly mean nothing to review). Otherwise a list, empty if there are no weak topics.'
+          items: { $ref: '#/components/schemas/WeakTopic' }
+    AttemptReview:
+      type: object
+      required: [ attemptId, items ]
+      properties:
+        attemptId: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            required: [ question, isCorrect ]
+            properties:
+              question: { $ref: '#/components/schemas/Question' }
+              selectedOptionId: { type: string, nullable: true, description: 'MULTIPLE_CHOICE' }
+              correctOptionId: { type: string, nullable: true, description: 'MULTIPLE_CHOICE' }
+              submittedBlockIds: { type: array, nullable: true, items: { type: string }, description: 'PARSONS. What the user submitted, in order.' }
+              correctBlockIds: { type: array, nullable: true, items: { type: string }, description: 'PARSONS. The correct blocks in the correct order, distractors left out.' }
+              isCorrect: { type: boolean }
+              explanation: { type: string, nullable: true }
+              hint: { type: string, nullable: true }
+
+    # ---- leaderboard
+    LeaderboardEntry:
+      type: object
+      required: [ rank, user, points, timeSeconds ]
+      properties:
+        rank: { type: integer, minimum: 1 }
+        user: { $ref: '#/components/schemas/UserSummary' }
+        points: { type: integer }
+        timeSeconds: { type: integer }
+    LeaderboardPage:
+      type: object
+      required: [ entries ]
+      properties:
+        entries: { type: array, items: { $ref: '#/components/schemas/LeaderboardEntry' } }
+        myEntry: { allOf: [ { $ref: '#/components/schemas/LeaderboardEntry' } ], nullable: true }
+        nextCursor: { type: string, nullable: true }
+
+    # ---- social
+    UserSummary:
+      type: object
+      required: [ userId, name ]
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        avatarUrl: { type: string, nullable: true }
+    AddFriendRequest:
+      type: object
+      required: [ userId ]
+      properties:
+        userId: { type: string }
+    FriendRequestCreated:
+      type: object
+      required: [ requestId ]
+      properties:
+        requestId: { type: string }
+    ChallengeRequest:
+      type: object
+      required: [ topicIds, questionCount, timeLimitSeconds ]
+      description: 'The match settings the host picks. The allowed ranges are configured on the server (values not decided yet).'
+      properties:
+        topicIds: { type: array, minItems: 1, items: { type: string }, description: 'Topics to draw the questions from' }
+        questionCount: { type: integer, minimum: 1 }
+        timeLimitSeconds: { type: integer, minimum: 1 }
+    FriendMatchCreated:
+      type: object
+      required: [ matchId, status, expiresAt ]
+      properties:
+        matchId: { type: string }
+        status: { type: string, enum: [ PENDING, ACCEPTED, DECLINED, EXPIRED, FINISHED ] }
+        expiresAt: { type: string, format: date-time }
+
+    # ---- cosmetics and payments
+    CosmeticType:
+      type: string
+      enum: [ AVATAR_FRAME, PROFILE_THEME, BADGE_SKIN, TITLE ]
+    EquipCosmeticRequest:
+      type: object
+      required: [ cosmeticId ]
+      properties:
+        cosmeticId: { type: string }
+    EquippedCosmeticIds:
+      type: object
+      description: 'The state after the change. Null means the slot is empty. Asset details come from GraphQL.'
+      properties:
+        avatarFrameId: { type: string, nullable: true }
+        profileThemeId: { type: string, nullable: true }
+        badgeSkinId: { type: string, nullable: true }
+        titleId: { type: string, nullable: true }
+    RevenueCatWebhook:
+      type: object
+      required: [ event ]
+      description: 'Only the fields we use are listed. RevenueCat sends more, so unknown fields must be ignored.'
+      properties:
+        api_version: { type: string }
+        event:
+          type: object
+          required: [ id, type, app_user_id ]
+          additionalProperties: true
+          properties:
+            id: { type: string, description: 'Unique per event. Retries reuse it, so it is the idempotency key.' }
+            type: { type: string, example: NON_RENEWING_PURCHASE }
+            app_user_id: { type: string, description: 'Must be our user ID (set with Purchases.logIn after login). Anonymous IDs starting with $RCAnonymousID cannot be matched to a user.' }
+            product_id: { type: string }
+            transaction_id: { type: string, description: 'Second idempotency key, one per purchase' }
+            cancel_reason: { type: string, description: 'On CANCELLATION, tells a refund apart from other cancellations' }
