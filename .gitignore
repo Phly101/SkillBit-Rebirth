@@ -62,6 +62,7 @@ out/
 **/HELP.md
 
 # Ignore local execution properties anywhere in backend
+
 **/application-local.properties
 **/application-*.properties
 !**/application-dev.properties

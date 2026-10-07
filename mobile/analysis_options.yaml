@@ -7,6 +7,7 @@ analyzer:
     - "ios/**"
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - linux/**
 
   language:
     strict-casts: true
