@@ -1,7 +1,7 @@
 # 02. Learning Content & Learner Progress ERD
 
 ![Learning Content & Learner Progress ERD](./learning_content_and_learner_progress.png)
-
+```mermaid
 ## Interactive Mermaid Source
 
 erDiagram
@@ -98,3 +98,4 @@ LESSONS ||--o{ LESSON_COMPLETIONS : "completed in"
         uuid lesson_id FK
         timestamptz finished_at
     }
+```

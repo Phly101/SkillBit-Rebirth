@@ -4,7 +4,7 @@
 
 ## Interactive Mermaid Source
 
-
+```mermaid
 erDiagram
 USERS ||--o{ FRIENDSHIPS : "friend_1 / friend_2"
 USERS ||--o{ FRIEND_REQUESTS : "sends / receives"
@@ -53,3 +53,4 @@ QUESTIONS ||--o{ FRIENDLY_MATCH_QUESTIONS : "selected for"
         uuid question_id PK,FK
         int sequence_order
     }
+```

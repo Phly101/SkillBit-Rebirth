@@ -4,7 +4,7 @@
 
 ## Interactive Mermaid Source
 
-
+```mermaid
 erDiagram
 LESSONS ||--o{ QUESTIONS : "quiz questions pool"
 QUESTIONS ||--o| QUESTIONS : "replaces / versions"
@@ -57,3 +57,4 @@ QUESTIONS ||--o{ QUIZ_QUESTIONS : "assigned to"
         uuid question_id PK,FK
         int sequence_order
     }
+```

@@ -3,7 +3,7 @@
 ![Contests ERD](./contests.png)
 
 ## Interactive Mermaid Source
-
+```mermaid
 erDiagram
 CONTESTS ||--o{ CONTEST_ENTRIES : "has entry"
 USERS ||--o{ CONTEST_ENTRIES : "participates in"
@@ -36,3 +36,4 @@ QUESTIONS ||--o{ CONTEST_QUESTIONS : "selected for"
         uuid question_id PK,FK
         int sequence_order
     }
+```

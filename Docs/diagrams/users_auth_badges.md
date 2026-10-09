@@ -4,7 +4,7 @@
 
 ## Interactive Mermaid Source
 
-
+```mermaid
 erDiagram
 BADGES ||--o{ USERS : "assigned to"
 USERS ||--o{ SOCIAL_IDENTITIES : "owns"
@@ -71,3 +71,4 @@ USERS ||--o{ PASSWORD_RESET_TOKENS : "requests"
         timestamptz expires_at
         timestamptz created_at
     }
+```

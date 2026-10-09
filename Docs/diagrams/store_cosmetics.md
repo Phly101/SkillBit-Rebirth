@@ -5,7 +5,7 @@
 ## Interactive Mermaid Source
 
 
-
+```mermaid
 erDiagram
 USERS ||--o{ PAYMENT_EVENTS : "initiates"
 COSMETIC_ITEMS ||--o{ USER_COSMETICS : "owned as"
@@ -60,3 +60,4 @@ USER_COSMETICS ||--o| EQUIPPED_COSMETICS : "equipped in slot"
         uuid cosmetic_id FK
         timestamptz equipped_at
     }
+```

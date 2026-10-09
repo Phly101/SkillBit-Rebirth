@@ -4,7 +4,7 @@
 
 ## Interactive Mermaid Source
 
-
+```mermaid
 erDiagram
 USERS ||--o{ QUIZ_ATTEMPTS : "takes"
 QUIZZES ||--o{ QUIZ_ATTEMPTS : "attempted in"
@@ -138,3 +138,4 @@ QUIZ_ATTEMPT_QUESTIONS ||--o{ QUIZ_ATTEMPT_PARSONS_ANSWERS : "answers Parsons"
         uuid contest_id FK
         timestamptz created_at
     }
+```

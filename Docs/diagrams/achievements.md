@@ -3,7 +3,7 @@
 ![achievemnts ERD](./achievemnts.png)
 
 ## Interactive Mermaid Source
-
+```mermaid
 erDiagram
 ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : "granted via"
 USERS ||--o{ USER_ACHIEVEMENTS : "earns"
@@ -25,3 +25,4 @@ USERS ||--o{ USER_ACHIEVEMENTS : "earns"
         uuid achievement_id PK,FK
         timestamptz earned_at
     }
+```
