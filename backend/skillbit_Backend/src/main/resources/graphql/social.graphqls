@@ -37,8 +37,6 @@ type FriendMatch {
   status: FriendMatchStatus!
   "The other player, from the logged-in user's point of view."
   opponent: User!
-  "The set of questions the server picked from the contest pool for this match."
-  quiz: Quiz!
   "What the host chose."
   topics: [Topic!]!
   questionCount: Int!
