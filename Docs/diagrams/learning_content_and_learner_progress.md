@@ -1,9 +1,9 @@
 # 02. Learning Content & Learner Progress ERD
 
 ![Learning Content & Learner Progress ERD](./learning_content_and_learner_progress.png)
-```mermaid
-## Interactive Mermaid Source
 
+## Interactive Mermaid Source
+```mermaid
 erDiagram
 LEVELS ||--o{ COURSES : "contains"
 COURSES ||--o{ SECTIONS : "contains"
