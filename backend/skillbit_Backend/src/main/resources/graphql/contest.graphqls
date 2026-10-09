@@ -1,4 +1,4 @@
- extend type Query {
+extend type Query {
   contest(id: ID!): Contest
   contests(status: ContestStatus, first: Int = 20, after: String): ContestConnection!
 }
@@ -26,7 +26,10 @@ type Contest {
   "Set once the user has started an attempt. Use it to open the results page."
   myAttemptId: ID
   participantCount: Int!
-  quiz: Quiz!
+  "How many questions the contest has."
+  questionCount: Int!
+  "How long each participant has once they start, in seconds. Null means only the contest end limits them."
+  timeLimitSeconds: Int
   "Tags of the contest, drawn from all three levels. Contests have tags but no difficulty."
   topics: [Topic!]!
 }
