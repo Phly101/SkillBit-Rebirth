@@ -1,0 +1,60 @@
+# Interactive examples under a lesson: code in up to 3 languages with a recorded output, plus an optional animation.
+# Read-only content. Nothing here changes progress or points.
+
+# On the Spring side register ExtendedScalars.Json (graphql-java-extended-scalars), next to DateTime.
+scalar JSON
+
+enum CodeLanguage {
+  CPP
+  JAVA
+  PYTHON
+}
+
+"One value per renderer the app can draw. Adding a value needs an app release and a DB migration."
+enum VisualizationRenderer {
+  ARRAY
+  LINKED_LIST
+  TREE
+  GRAPH
+  STACK_QUEUE
+  HASH_TABLE
+  THREAD_TIMELINE
+}
+
+extend type Query {
+  "A lesson with its examples. Used when the user opens a lesson, so `course(id)` stays light."
+  lesson(id: ID!): Lesson
+}
+
+extend type Lesson {
+  "Cheap to request inside `course(id)`; use it to show an 'examples' badge on the lesson row."
+  exampleCount: Int!
+  "Full example content. Request on the lesson screen only. Empty when the lesson has none."
+  examples: [LessonExample!]!
+}
+
+type LessonExample {
+  id: ID!
+  title: String!
+  description: String!
+  order: Int!
+  "One entry per language this example exists in (up to three)."
+  codeVariants: [CodeVariant!]!
+  "Null when the example has no animation."
+  visualization: Visualization
+}
+
+type CodeVariant {
+  language: CodeLanguage!
+  sourceCode: String!
+  "What the program printed when it was run once while the content was written. The app only shows it."
+  output: String!
+}
+
+type Visualization {
+  renderer: VisualizationRenderer!
+  "Format version of `steps`, so an old app can skip a format it does not understand."
+  schemaVersion: Int!
+  "Ordered list of frames the renderer plays. Shape depends on `renderer` (see Docs)."
+  steps: JSON!
+}
