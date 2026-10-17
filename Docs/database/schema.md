@@ -14,13 +14,13 @@ Target: PostgreSQL 13 or newer. The API rules this is built from live in [`../ap
   Shared history (attempts, contest results, the points ledger) must not.
 - **Hibernate** runs with `ddl-auto=validate`. Flyway owns the schema.
 - **Derived, never stored:** contest status (upcoming, live, ended), lesson counts, progress percentage, whether a level
-  is unlocked, `Relationship` between two users, a growth point's `badgeChange`, **a user's result on a section quiz (
+  is unlocked, whether a course is locked, `Relationship` between two users, a growth point's `badgeChange`, **a user's result on a section quiz (
   computed from quiz attempts)**, and the number of questions in a friendly match (counted from its question list).
 - **Naming:** constraints use the prefixes `chk_` (check), `uk_` (unique, including partial unique indexes) and `idx_`
   (plain index). Enum-like values are UPPERCASE (`'PENDING'`, `'GOOGLE'`).
 - **Slugs:** levels, courses, sections, lessons and roadmaps have a `slug`, which is what the importer upserts by.
   Level, course and roadmap slugs are unique globally; section and lesson slugs are unique **within their parent**
-  (course, section). `sequence_order` is also unique within its parent, never globally.
+  (course, section); example slugs are unique within their lesson. `sequence_order` is also unique within its parent, never globally.
 - **`ON DELETE`:** content and shared history use `RESTRICT` (a lesson, course, question or contest that is in use
   cannot be deleted). Purely personal rows cascade from the user. Child rows that only exist for their parent (options,
   blocks, link tables, match questions) cascade from that parent.
@@ -49,8 +49,10 @@ or in itself.
 | `V10__attempts_and_points`  | quiz attempts, contest attempts, friendly match attempts, a served-questions snapshot per kind, points ledger | V3, V5, V7, V8, V9         | Everything produced by answering questions                                                            |
 | `V11__achievements`         | achievements, user achievements                                                                               | V3                         | Independent feature                                                                                   |
 | `V12__store_and_payments`   | payment events, cosmetic items, donation products, user cosmetics, equipped cosmetics                         | V3                         | Independent feature                                                                                   |
+| `V13__interactive_examples` | lesson examples, example code variants, example visualizations                                                | V5                         | Optional teaching layer on top of lessons. Content comes from the importer                            |
+| `V14__admins`               | admins                                                                                                        | V3                         | Independent feature. An admin is a normal user plus one row here                                      |
 
-Content (courses, lessons, questions, topics, achievements, cosmetics) is **not** loaded by migrations. It comes from
+Content (courses, lessons, questions, topics, lesson examples, achievements, cosmetics) is **not** loaded by migrations. It comes from
 the importer, which upserts by a stable slug. Only data the app cannot run without (the badges) is a migration.
 
 Rules for writing them:
@@ -94,6 +96,12 @@ Rules for writing them:
 - Progress, "course finished" and "level unlocked" are derived from lesson completions **and completed section
   quizzes**. A section quiz counts as completed once some attempt reached at least 75% correct answers, and it stays
   completed (each attempt is judged on its own). **Decided: this is derived from quiz attempts, not stored.**
+- **Course locking (derived, nothing stored):** inside a level, a mandatory course is locked until its level is
+  unlocked and every mandatory course before it (by `sequence_order`) has an enrollment with `finished_at` set. Optional
+  courses are never locked by this rule and never block anyone. Because `sequence_order` now drives locking, new courses
+  are added at the end of a level, never in between. Enrolling in a locked course returns 403 `COURSE_LOCKED`.
+- Topics (tags) are attached to lessons, questions and friendly matches. A course has no tags of its own: if the app
+  needs them, they are derived from the topics of the course's lessons.
 
 ### 3. Questions and quizzes
 
@@ -196,6 +204,30 @@ Rules for writing them:
 - Payment events: provider, the provider's event ID (unique, this is the idempotency key), type, user (maybe unknown),
   product, transaction, the raw payload, and what happened to it.
 
+### 7. Interactive examples
+
+- A lesson may have ordered **examples**: slug (unique within the lesson), title, description and `sequence_order`
+  (unique within the lesson). They sit on top of the lesson's outside video or article, so the "at least one link" rule
+  on lessons is unchanged. Examples are read-only teaching content and never affect progress or points.
+- Each example has up to three **code variants**, one per language (`CPP`, `JAVA`, `PYTHON`): the source code and the
+  **output recorded when the example was authored**. The app never runs code. The primary key is (example, language).
+- An example may have one **visualization**: a renderer (`ARRAY`, `LINKED_LIST`, `TREE`, `GRAPH`, `STACK_QUEUE`,
+  `HASH_TABLE`, `THREAD_TIMELINE`), a schema version, and the animation `steps` as a JSONB array that is never empty.
+  The shape of the steps for each renderer is in the API docs (`interactive-examples.md`). A new renderer needs a
+  migration (it widens the `CHECK`) and an app release.
+- Everything cascades from the lesson (lesson, example, then its variants and visualization), like other child rows.
+  The importer upserts by (lesson, example slug), (example, language) and example.
+
+### 8. Admins
+
+- `admins` holds one `user_id`, which is both its primary key and a foreign key to `users`. An admin is a normal user
+  account plus one row here, so the same account can play the app and use the admin tools. Promote = insert the row,
+  demote = delete it. Deleting the user deletes the row.
+- The backend reads this table at login and carries the admin role in the token. The admin endpoints are not designed
+  yet.
+- No migration creates an admin (a migration would also run in production). On a test database, sign up through the
+  app and then run `dev_promote_admin.sql` by hand.
+
 ## Rules the database cannot enforce
 
 The application and the seed validator must keep these:
@@ -221,6 +253,10 @@ The application and the seed validator must keep these:
   one is idempotent.
 - Points follow the scoring rules in the API README (contest difficulty points, tier modifiers, penalty, rounding, top-3
   bonus, and the flat course amounts).
+- An example's recorded output must match what its code prints, in all three languages. The build script runs each
+  program, checks the three outputs agree and writes the output. The database also cannot check that a visualization's
+  steps match its renderer's format; the build script and the app do.
+- Course locking and the admin check are application rules (the data they read is all in the tables above).
 
 ## Diagrams
 
@@ -233,3 +269,4 @@ Can be found in ['../diagrams'](../diagrams)
    only stores the relative path.
    lifecycle above.
 3. **Refresh token rotation:** does a token need a link to the one that replaced it?
+4. **Admin API:** which endpoints the desktop admin app needs and how the admin role is carried in the token. Not needed for the player app.
