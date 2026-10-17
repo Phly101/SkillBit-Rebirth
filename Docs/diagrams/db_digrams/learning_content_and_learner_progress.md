@@ -1,6 +1,6 @@
 # 02. Learning Content & Learner Progress ERD
 
-![Learning Content & Learner Progress ERD](./learning_content_and_learner_progress.png)
+![Learning Content & Learner Progress ERD](learning_content_and_learner_progress.png)
 
 ## Interactive Mermaid Source
 ```mermaid

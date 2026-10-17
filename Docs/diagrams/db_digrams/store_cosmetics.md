@@ -1,6 +1,6 @@
 # 08. Store & Cosmetics ERD
 
-![Store & Cosmetics ERD](./store_cosmetics.png)
+![Store & Cosmetics ERD](store_cosmetics.png)
 
 ## Interactive Mermaid Source
 

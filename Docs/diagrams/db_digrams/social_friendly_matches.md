@@ -1,6 +1,6 @@
 # 05. Social & Friendly Matches ERD
 
-![Social & Friendly Matches ERD](./social_friendly_matches.png)
+![Social & Friendly Matches ERD](social_friendly_matches.png)
 
 ## Interactive Mermaid Source
 

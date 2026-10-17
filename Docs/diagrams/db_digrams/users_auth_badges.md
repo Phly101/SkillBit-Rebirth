@@ -1,6 +1,6 @@
 # 01. Authentication & Users ERD
 
-![AUTH ERD](./users_auth_badges.png)
+![AUTH ERD](users_auth_badges.png)
 
 ## Interactive Mermaid Source
 

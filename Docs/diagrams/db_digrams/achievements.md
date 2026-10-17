@@ -1,6 +1,6 @@
 # 07. Achievements ERD
 
-![achievemnts ERD](./achievemnts.png)
+![achievemnts ERD](achievemnts.png)
 
 ## Interactive Mermaid Source
 ```mermaid

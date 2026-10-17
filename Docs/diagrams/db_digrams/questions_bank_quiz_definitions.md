@@ -1,6 +1,6 @@
 # 03. Questions Bank & Quiz Definitions ERD
 
-![Questions Bank & Quiz Definitions ERD](./questions_bank_quiz_definitions.png)
+![Questions Bank & Quiz Definitions ERD](questions_bank_quiz_definitions.png)
 
 ## Interactive Mermaid Source
 

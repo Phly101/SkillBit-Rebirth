@@ -1,6 +1,6 @@
 # 06. Attempts & Points Ledger ERD
 
-![Attempts & Points Ledger ERD](./attempts_points_ledger.png)
+![Attempts & Points Ledger ERD](attempts_points_ledger.png)
 
 ## Interactive Mermaid Source
 

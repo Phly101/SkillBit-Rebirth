@@ -1,6 +1,6 @@
 # 04. Contests ERD
 
-![Contests ERD](./contests.png)
+![Contests ERD](contests.png)
 
 ## Interactive Mermaid Source
 ```mermaid
