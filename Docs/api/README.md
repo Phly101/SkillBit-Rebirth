@@ -2,11 +2,11 @@
 
 Three transports, one rule: **GraphQL asks, REST commands, the socket pushes.**
 
-| Transport | Use it for | Source of truth |
-|---|---|---|
-| GraphQL | Reading data shaped around a screen (home, course content, course search, quiz and contest details, profile header, achievements, friends list, store catalog) | `Backend/skillbit_Backend/src/main/resources/graphql/*.graphqls` |
-| REST | Anything that changes state or must be an explicit action (auth, enroll, lesson completion, start/autosave/submit, friend actions, profile edits) | [`../../preview/openapi.yaml`](../../preview/openapi.yaml) |
-| WebSocket | Server-to-client change events so the UI updates without reloading | [`../../preview/events.md`](../../preview/events.md) |
+| Transport | Use it for                                                                                                                                                     | Source of truth                                                  |
+|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| GraphQL   | Reading data shaped around a screen (home, course content, course search, quiz and contest details, profile header, achievements, friends list, store catalog) | `Backend/skillbit_Backend/src/main/resources/graphql/*.graphqls` |
+| REST      | Anything that changes state or must be an explicit action (auth, enroll, lesson completion, start/autosave/submit, friend actions, profile edits)              | [`../../preview/openapi.yaml`](../../preview/openapi.yaml)       |
+| WebSocket | Server-to-client change events so the UI updates without reloading                                                                                             | [`../../preview/events.md`](../../preview/events.md)             |
 
 The database schema is described in [`../database/schema.md`](../database/schema.md).
 
@@ -25,91 +25,92 @@ Status legend: **[notes]** came from the original design notes, **[decided]** wa
 
 Single endpoint, schema split by domain (`user`, `course`, `quiz`, `contest`).
 
-| Query | Used by | Notes |
-|---|---|---|
-| `me { name avatarUrl points badge { ... } nextBadge pointsToNextBadge }` | Home header, profile | Initial snapshot; the socket keeps it fresh afterwards |
-| `levels { name isUnlocked courses(first) { ... myProgress } }` | Home | Levels are plain data. Lazy-load other levels with `level(id)` |
-| `course(id)` | Course preview and details | Same type; details also requests `sections` (each with its `lessons` and its `quiz`). `roadmaps { title url }` feeds the "see roadmap" button |
-| `courses(search, levelId, first, after)` | Course search | [decided] Returns the same `Course` type as the home cards |
-| `quiz(id)` | Quiz details | Metadata and questions per the start rules; never expose correct answers before submit |
-| `contest(id)` / `contests` | Contest details and list | Schedule, level tier, and `myStatus` (not enrolled, enrolled, in progress, submitted, result ready) |
-| `me { achievements }` | Achievements detail | [decided] Read-only, nested under the user |
-| `badgeLadder` | Ranks screen | [decided] All five badges with tier and thresholds |
-| `searchUsers(query, first, after)` | Friends search | [decided] Moved from REST. `relationship` on each result drives the Add/Remove/Pending button |
-| `user(id)` | Another user's public profile | [decided] Anyone can view anyone. Adds `relationship`, `recentAchievements`, `growth`, `courseProgress` on top of the basic `User` fields |
-| `me { recentAchievements growth }` | Own profile | [decided] Same growth graph as `user(id)` |
-| `storeItems(type)` | Store | [proposed] Catalog with `isOwned` for the logged-in user. Prices come from the store SDK, not from here |
-| `me { cosmetics ownedCosmetics isSupporter }` | Own profile, inventory | [proposed] `cosmetics` and `isSupporter` are also on `user(id)`, so others see your frame, title and badge skin |
-| `me { friends }` | Friends list | [decided] Friend actions stay REST |
-| `me { friendRequests }` | Incoming friend requests | [proposed] |
-| `friendMatch(id)` | Friendly match status and scores | [proposed] Scores stay hidden until both players finish |
-| `friendMatchLimits`, `matchTopics` | Friendly match setup screen | [proposed] The allowed ranges for questions and time, and the topics the host can choose |
-| `me { weakTopics }` | Home "review these" card | [proposed] |
+| Query                                                                    | Used by                          | Notes                                                                                                                                                               |
+|--------------------------------------------------------------------------|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `me { name avatarUrl points badge { ... } nextBadge pointsToNextBadge }` | Home header, profile             | Initial snapshot; the socket keeps it fresh afterwards                                                                                                              |
+| `levels { name isUnlocked courses(first) { ... myProgress } }`           | Home                             | Levels are plain data. Lazy-load other levels with `level(id)`                                                                                                      |
+| `course(id)`                                                             | Course preview and details       | Same type; details also requests `sections` (each with its `lessons` and its `quiz`). `roadmaps { title url }` feeds the "see roadmap" button                       |
+| `courses(search, levelId, first, after)`                                 | Course search                    | [decided] Returns the same `Course` type as the home cards                                                                                                          |
+| `quiz(id)`                                                               | Quiz details                     | Metadata and questions per the start rules; never expose correct answers before submit                                                                              |
+| `contest(id)` / `contests`                                               | Contest details and list         | Schedule, level tier, and `myStatus` (not enrolled, enrolled, in progress, submitted, result ready)                                                                 |
+| `me { achievements }`                                                    | Achievements detail              | [decided] Read-only, nested under the user                                                                                                                          |
+| `badgeLadder`                                                            | Ranks screen                     | [decided] All five badges with tier and thresholds                                                                                                                  |
+| `searchUsers(query, first, after)`                                       | Friends search                   | [decided] Moved from REST. `relationship` on each result drives the Add/Remove/Pending button                                                                       |
+| `user(id)`                                                               | Another user's public profile    | [decided] Anyone can view anyone. Adds `relationship`, `recentAchievements`, `growth`, `courseProgress` on top of the basic `User` fields                           |
+| `me { recentAchievements growth }`                                       | Own profile                      | [decided] Same growth graph as `user(id)`                                                                                                                           |
+| `storeItems(type)`                                                       | Store                            | [proposed] Catalog with `isOwned` for the logged-in user. Prices come from the store SDK, not from here                                                             |
+| `me { cosmetics ownedCosmetics isSupporter }`                            | Own profile, inventory           | [proposed] `cosmetics` and `isSupporter` are also on `user(id)`, so others see your frame, title and badge skin                                                     |
+| `me { friends }`                                                         | Friends list                     | [decided] Friend actions stay REST                                                                                                                                  |
+| `me { friendRequests }`                                                  | Incoming friend requests         | [proposed]                                                                                                                                                          |
+| `friendMatch(id)`                                                        | Friendly match status and scores | [proposed] Scores stay hidden until both players finish                                                                                                             |
+| `friendMatchLimits`, `matchTopics`                                       | Friendly match setup screen      | [proposed] The allowed ranges for questions and time, and the topics the host can choose                                                                            |
+| `me { weakTopics }`                                                      | Home "review these" card         | [proposed]                                                                                                                                                          |
+| `lesson(id)`                                                             | Lesson screen                    | [proposed] Returns `examples` (code per language, recorded output, optional animation). `course(id)` only asks for `exampleCount`, so the course screen stays light |
 
 ## REST (commands)
 
 ### Auth [notes]
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/auth/signup` | Create account, triggers OTP |
-| POST | `/auth/login` | Email + password |
-| POST | `/auth/google` | Google sign-in (exchange ID token) |
-| POST | `/auth/github` | GitHub sign-in (exchange code) |
-| POST | `/auth/otp/send` | Send OTP |
-| POST | `/auth/otp/resend` | Resend OTP (rate limited) |
-| POST | `/auth/verify` | Verify OTP |
-| POST | `/auth/forgot-password` | Start reset |
-| POST | `/auth/reset-password` | [proposed] Finish reset with the token from `/auth/verify` |
-| POST | `/auth/logout` | Revoke refresh token |
-| POST | `/auth/refresh` | [proposed] Rotate tokens |
+| Method | Path                    | Purpose                                                    |
+|--------|-------------------------|------------------------------------------------------------|
+| POST   | `/auth/signup`          | Create account, triggers OTP                               |
+| POST   | `/auth/login`           | Email + password                                           |
+| POST   | `/auth/google`          | Google sign-in (exchange ID token)                         |
+| POST   | `/auth/github`          | GitHub sign-in (exchange code)                             |
+| POST   | `/auth/otp/send`        | Send OTP                                                   |
+| POST   | `/auth/otp/resend`      | Resend OTP (rate limited)                                  |
+| POST   | `/auth/verify`          | Verify OTP                                                 |
+| POST   | `/auth/forgot-password` | Start reset                                                |
+| POST   | `/auth/reset-password`  | [proposed] Finish reset with the token from `/auth/verify` |
+| POST   | `/auth/logout`          | Revoke refresh token                                       |
+| POST   | `/auth/refresh`         | [proposed] Rotate tokens                                   |
 
 ### Account [notes]
 
-| Method | Path | Purpose |
-|---|---|---|
-| PATCH | `/me/profile` | Change name. On success, emits `profile.updated` |
-| PUT | `/me/avatar` | Upload image (multipart). Server bumps the version and emits `profile.updated` with the new versioned URL |
-| POST | `/me/email-change` | Request email change (OTP confirm) |
-| POST | `/me/password-change` | Change password |
+| Method | Path                  | Purpose                                                                                                   |
+|--------|-----------------------|-----------------------------------------------------------------------------------------------------------|
+| PATCH  | `/me/profile`         | Change name. On success, emits `profile.updated`                                                          |
+| PUT    | `/me/avatar`          | Upload image (multipart). Server bumps the version and emits `profile.updated` with the new versioned URL |
+| POST   | `/me/email-change`    | Request email change (OTP confirm)                                                                        |
+| POST   | `/me/password-change` | Change password                                                                                           |
 
 ### Learning and contests
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/courses/{id}/enroll` | Enroll in course [notes] |
-| POST | `/lessons/{id}/complete` | Mark a lesson completed (lessons change only by this button). Idempotent, emits `progress.updated`. When progress (lessons and quizzes) reaches 100% the course finishes automatically (`course.finished`) |
-| POST | `/contests/{id}/enroll` | Enroll in contest [notes]. 403 until level 1 is finished |
-| POST | `/quizzes/{id}/attempts` | Start quiz [notes] |
-| POST | `/contests/{id}/attempts` | Start contest [notes] |
-| POST | `/attempts/{id}/submit` | Submit quiz or contest. Response includes score and `weakTopics` |
-| POST | `/attempts/{id}/restart` | Restart quiz [notes] |
-| GET | `/attempts/{id}/results` | Results [notes] |
-| GET | `/attempts/{id}/review` | Review answers with hints [notes] |
-| GET | `/contests/{id}/leaderboard` | Leaderboard snapshot [notes]. Live updates come from the socket. Ranks are provisional until the contest ends |
+| Method | Path                         | Purpose                                                                                                                                                                                                    |
+|--------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| POST   | `/courses/{id}/enroll`       | Enroll in course [notes]                                                                                                                                                                                   |
+| POST   | `/lessons/{id}/complete`     | Mark a lesson completed (lessons change only by this button). Idempotent, emits `progress.updated`. When progress (lessons and quizzes) reaches 100% the course finishes automatically (`course.finished`) |
+| POST   | `/contests/{id}/enroll`      | Enroll in contest [notes]. 403 until level 1 is finished                                                                                                                                                   |
+| POST   | `/quizzes/{id}/attempts`     | Start quiz [notes]                                                                                                                                                                                         |
+| POST   | `/contests/{id}/attempts`    | Start contest [notes]                                                                                                                                                                                      |
+| POST   | `/attempts/{id}/submit`      | Submit quiz or contest. Response includes score and `weakTopics`                                                                                                                                           |
+| POST   | `/attempts/{id}/restart`     | Restart quiz [notes]                                                                                                                                                                                       |
+| GET    | `/attempts/{id}/results`     | Results [notes]                                                                                                                                                                                            |
+| GET    | `/attempts/{id}/review`      | Review answers with hints [notes]                                                                                                                                                                          |
+| GET    | `/contests/{id}/leaderboard` | Leaderboard snapshot [notes]. Live updates come from the socket. Ranks are provisional until the contest ends                                                                                              |
 
 ### Friends and friendly matches
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/friends` | Add friend (sends request) [notes] |
-| DELETE | `/friends/{userId}` | Remove friend [notes] |
-| POST | `/friends/{userId}/challenge` | Challenge a friend and set up the match: the host picks topics, number of questions and time limit within server-configured limits [notes] |
-| POST | `/friend-matches/{id}/accept` | [proposed] Accept challenge |
-| POST | `/friend-matches/{id}/decline` | [proposed] Decline challenge |
-| POST | `/friend-matches/{id}/attempts` | [proposed] Play your side of the match (same questions for both players) |
-| POST | `/friend-requests/{id}/accept` | [proposed] Accept a friend request |
-| POST | `/friend-requests/{id}/decline` | [proposed] Decline a friend request |
+| Method | Path                            | Purpose                                                                                                                                    |
+|--------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| POST   | `/friends`                      | Add friend (sends request) [notes]                                                                                                         |
+| DELETE | `/friends/{userId}`             | Remove friend [notes]                                                                                                                      |
+| POST   | `/friends/{userId}/challenge`   | Challenge a friend and set up the match: the host picks topics, number of questions and time limit within server-configured limits [notes] |
+| POST   | `/friend-matches/{id}/accept`   | [proposed] Accept challenge                                                                                                                |
+| POST   | `/friend-matches/{id}/decline`  | [proposed] Decline challenge                                                                                                               |
+| POST   | `/friend-matches/{id}/attempts` | [proposed] Play your side of the match (same questions for both players)                                                                   |
+| POST   | `/friend-requests/{id}/accept`  | [proposed] Accept a friend request                                                                                                         |
+| POST   | `/friend-requests/{id}/decline` | [proposed] Decline a friend request                                                                                                        |
 
 Friendly match flow (1v1, highest score wins), async version: challenge, accept, both play the same set of questions (a random set from the contest pool, using the topics, question count and time limit the host chose) within a window via the shared attempt endpoints, server compares scores and emits `match.finished`. Friendly matches award no points. See [`../../preview/events.md`](../../preview/events.md).
 
 ### Cosmetics
 
-| Method | Path | Purpose |
-|---|---|---|
-| PUT | `/me/cosmetics/{type}` | [proposed] Equip an owned item in that slot (`AVATAR_FRAME`, `PROFILE_THEME`, `BADGE_SKIN`, `TITLE`) |
-| DELETE | `/me/cosmetics/{type}` | [proposed] Empty that slot |
-| POST | `/payments/revenuecat-webhook` | [proposed] Called by RevenueCat, never by the app. Grants purchases |
+| Method | Path                           | Purpose                                                                                              |
+|--------|--------------------------------|------------------------------------------------------------------------------------------------------|
+| PUT    | `/me/cosmetics/{type}`         | [proposed] Equip an owned item in that slot (`AVATAR_FRAME`, `PROFILE_THEME`, `BADGE_SKIN`, `TITLE`) |
+| DELETE | `/me/cosmetics/{type}`         | [proposed] Empty that slot                                                                           |
+| POST   | `/payments/revenuecat-webhook` | [proposed] Called by RevenueCat, never by the app. Grants purchases                                  |
 
 ## Course structure and levels
 
@@ -157,10 +158,10 @@ Principle: **the store sells, RevenueCat notifies, the backend grants, the socke
 
 How a cosmetic is obtained (`CosmeticItem.unlock`), and nothing else grants one:
 
-| `unlock` | How |
-|---|---|
-| `PURCHASE` | Bought with Google Play Billing |
-| `DONATION` | Granted for donating through the tip jar (also a Play Billing product) |
+| `unlock`           | How                                                                        |
+|--------------------|----------------------------------------------------------------------------|
+| `PURCHASE`         | Bought with Google Play Billing                                            |
+| `DONATION`         | Granted for donating through the tip jar (also a Play Billing product)     |
 | `ALL_ACHIEVEMENTS` | Granted by the server when the user has earned all achievements and badges |
 
 Rules that make this safe:
@@ -182,22 +183,22 @@ Not covered here: streak savers (see Future plans), Patreon (parked, see Future 
 
 In this project **points** always means the score that moves badges. It comes from two places only: finishing courses and contests. Quizzes and friendly matches award none.
 
-| Source | Points |
-|---|---|
-| Contests | The most: per-question points with the badge tier modifiers and penalties, plus the top-3 bonus. Applied when the contest ends |
+| Source             | Points                                                                                                                                                                                                |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Contests           | The most: per-question points with the badge tier modifiers and penalties, plus the top-3 bonus. Applied when the contest ends                                                                        |
 | Finishing a course | A flat amount per course: 100 for a mandatory course of level 1, 200 for level 2, 350 for level 3. An optional course gives 2.5 times a normal course of its level (250, 500, 875). No tier modifiers |
-| Quizzes | None. A quiz only decides whether it counts as passed (see below), which feeds course progress |
-| Friendly matches | None |
+| Quizzes            | None. A quiz only decides whether it counts as passed (see below), which feeds course progress                                                                                                        |
+| Friendly matches   | None                                                                                                                                                                                                  |
 
 **Contest scoring.** Base points by difficulty: easy 1, medium 3, hard 5. The badge tier modifiers exist only in contests, and the tier is the user's own badge tier when the attempt starts:
 
-| Tier | Correct answer | Wrong answer |
-|---|---|---|
-| 1 | base | no penalty |
-| 2 | base x 1.2 | minus 10% of base |
-| 3 | base x 1.4 | minus 20% of base |
-| 4 | base x 1.6 | minus 30% of base |
-| 5 | base x 1.8 | minus 40% of base |
+| Tier | Correct answer | Wrong answer      |
+|------|----------------|-------------------|
+| 1    | base           | no penalty        |
+| 2    | base x 1.2     | minus 10% of base |
+| 3    | base x 1.4     | minus 20% of base |
+| 4    | base x 1.6     | minus 30% of base |
+| 5    | base x 1.8     | minus 40% of base |
 
 Skipped questions score nothing.
 
@@ -222,10 +223,10 @@ Codeforces-style: one point per **finished contest**, never per quiz or course. 
 
 Every question has a `type`. Questions are served only in the start-attempt response (REST), never through GraphQL, because they are served per attempt and must never carry the answers.
 
-| Type | Served as | The user answers with |
-|---|---|---|
-| `MULTIPLE_CHOICE` | `text` and `options` | `selectedOptionId` |
-| `PARSONS` | `text`, `language` and `blocks` (lines of code) | `orderedBlockIds`: the block IDs in the order the user arranged them |
+| Type              | Served as                                       | The user answers with                                                |
+|-------------------|-------------------------------------------------|----------------------------------------------------------------------|
+| `MULTIPLE_CHOICE` | `text` and `options`                            | `selectedOptionId`                                                   |
+| `PARSONS`         | `text`, `language` and `blocks` (lines of code) | `orderedBlockIds`: the block IDs in the order the user arranged them |
 
 How `PARSONS` (the "lego" arranging question) works:
 
