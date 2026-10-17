@@ -23,6 +23,7 @@ type Course {
   isMandatory: Boolean!
   lessonCount: Int!
   level: Level!
+  isLocked: Boolean
   "Request on the details screen only; the preview card does not need it."
   sections: [Section!]!
   "Null if the user is not enrolled."
