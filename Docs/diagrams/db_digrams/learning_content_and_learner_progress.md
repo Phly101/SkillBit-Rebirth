@@ -17,6 +17,7 @@ USERS ||--o{ ENROLLMENTS : "enrolls in"
 COURSES ||--o{ ENROLLMENTS : "tracked in"
 USERS ||--o{ LESSON_COMPLETIONS : "completes"
 LESSONS ||--o{ LESSON_COMPLETIONS : "completed in"
+LESSON_RESOURCES ||--o{ LESSONS : "belongs to"
 
     LEVELS {
         uuid id PK
@@ -58,9 +59,14 @@ LESSONS ||--o{ LESSON_COMPLETIONS : "completed in"
         string slug
         string title
         string description
-        string video_url
-        string article_url
         int sequence_order
+    }
+    LESSON_RESOURCES{
+        uuid id PK
+        uuid lesson_id FK
+        string resource_type
+        string language
+        string url
     }
 
     TOPICS {
