@@ -1,13 +1,16 @@
-# Interactive examples under a lesson: code in up to 3 languages with a recorded output, plus an optional animation.
+# Interactive examples under a lesson: code (C++, Java, Python or a terminal command) with a recorded output, plus an optional animation.
 # Read-only content. Nothing here changes progress or points.
 
 # On the Spring side register ExtendedScalars.Json (graphql-java-extended-scalars), next to DateTime.
 scalar JSON
 
 enum CodeLanguage {
+  C
   CPP
   JAVA
   PYTHON
+  "A terminal command. The app draws it as a terminal card."
+  SHELL
 }
 
 "One value per renderer the app can draw. Adding a value needs an app release and a DB migration."
@@ -38,7 +41,7 @@ type LessonExample {
   title: String!
   description: String!
   order: Int!
-  "One entry per language this example exists in (up to three)."
+  "One entry per language this example exists in (at most one per language)."
   codeVariants: [CodeVariant!]!
   "Null when the example has no animation."
   visualization: Visualization
