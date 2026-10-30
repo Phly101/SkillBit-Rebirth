@@ -88,8 +88,13 @@ Rules for writing them:
   The multiplier is applied when you seed the data, so the schema just holds the final amount.
 - A course has ordered **sections**. A section has ordered **lessons** and one quiz (`quizzes.section_id` is required
   and unique, so a quiz exists only inside a course and a section has at most one).
-- A lesson has a title, a description, and a video link and/or an article link. **At least one of the two links must
-  exist.** Think about how to make the database enforce that.
+- A lesson has a title and a description. Its outside links live in `lesson_resources` (V15): one row per language
+  (`AR` or `EN`) and type (`VIDEO` or `ARTICLE`), so a lesson has at most one video and one article per language. **Every
+  lesson needs at least one resource.** That rule spans two tables, so the database cannot enforce it and the importer's
+  validator does.
+- Languages: the interface is localised. Lesson resources can be Arabic or English, and the app shows the user's
+  preferred language with a fallback to the other. Questions, answers, explanations and everything in quizzes, contests
+  and friendly matches are English only.
 - Topics (tags) and which lessons teach which topic. This is how a weak topic turns into "review these lessons".
 - Roadmaps: roadmap.sh slug and title, linked to courses (many to many).
 - Enrollments (user, course, when, finished when) and lesson completions (user, lesson, when).
@@ -207,9 +212,8 @@ Rules for writing them:
 ### 7. Interactive examples
 
 - A lesson may have ordered **examples**: slug (unique within the lesson), title, description and `sequence_order`
-  (unique within the lesson). They sit on top of the lesson's outside video or article, so the "at least one link" rule
-  on lessons is unchanged. Examples are read-only teaching content and never affect progress or points.
-- Each example has up to three **code variants**, one per language (`CPP`, `JAVA`, `PYTHON`): the source code and the
+  (unique within the lesson). They sit on top of the lesson's outside resources (videos and articles). Examples are read-only teaching content and never affect progress or points.
+- Each example has **code variants**, at most one per language (`C`, `CPP`, `JAVA`, `PYTHON`, `SHELL` for terminal commands): the source code and the
   **output recorded when the example was authored**. The app never runs code. The primary key is (example, language).
 - An example may have one **visualization**: a renderer (`ARRAY`, `LINKED_LIST`, `TREE`, `GRAPH`, `STACK_QUEUE`,
   `HASH_TABLE`, `THREAD_TIMELINE`), a schema version, and the animation `steps` as a JSONB array that is never empty.
@@ -253,8 +257,8 @@ The application and the seed validator must keep these:
   one is idempotent.
 - Points follow the scoring rules in the API README (contest difficulty points, tier modifiers, penalty, rounding, top-3
   bonus, and the flat course amounts).
-- An example's recorded output must match what its code prints, in all three languages. The build script runs each
-  program, checks the three outputs agree and writes the output. The database also cannot check that a visualization's
+- An example's recorded output must match what its code prints, in every language it has. The build script runs each
+  program, checks the outputs agree and writes the output. The database also cannot check that a visualization's
   steps match its renderer's format; the build script and the app do.
 - Course locking and the admin check are application rules (the data they read is all in the tables above).
 
