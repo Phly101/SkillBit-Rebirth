@@ -54,13 +54,20 @@ CREATE TABLE lessons
     slug           VARCHAR(100) NOT NULL,
     title          VARCHAR(150) NOT NULL,
     description    TEXT         NOT NULL,
-    video_url      VARCHAR(500),
-    article_url    VARCHAR(500),
     sequence_order INT          NOT NULL CHECK (sequence_order > 0),
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT uk_lessons_section_slug UNIQUE (section_id, slug),
-    CONSTRAINT uk_lessons_section_sequence UNIQUE (section_id, sequence_order),
-    CONSTRAINT chk_lesson_has_content CHECK (video_url IS NOT NULL OR article_url IS NOT NULL)
+    CONSTRAINT uk_lessons_section_sequence UNIQUE (section_id, sequence_order)
+);
+CREATE TABLE lesson_resources
+(
+    id            UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
+    lesson_id     UUID         NOT NULL REFERENCES lessons (id) ON DELETE CASCADE,
+    resource_type VARCHAR(10)  NOT NULL CHECK (resource_type IN ('VIDEO', 'ARTICLE')),
+    language      VARCHAR(2)   NOT NULL CHECK (language IN ('en', 'ar')),
+    url           VARCHAR(500) NOT NULL,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT uk_lesson_resources_lesson_type_language UNIQUE (lesson_id, resource_type, language)
 );
 
 

@@ -1,22 +1,25 @@
 CREATE TABLE questions
 (
-    id            UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    question_type VARCHAR(50) NOT NULL CHECK (question_type IN ('MULTIPLE_CHOICE', 'PARSONS')),
-    difficulty    VARCHAR(50) NOT NULL CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
-    status        VARCHAR(50) NOT NULL CHECK (status IN ('DRAFT', 'REVIEWED', 'PUBLISHED', 'RETIRED')),
-    pool          VARCHAR(50) NOT NULL CHECK (pool IN ('QUIZ', 'CONTEST')),
-    lesson_id     UUID REFERENCES lessons (id) ON DELETE RESTRICT,
-    prompt        TEXT        NOT NULL,
-    explanation   TEXT,
-    hint          TEXT,
-    language      VARCHAR(50),
-    source        VARCHAR(255),
-    replaces_id   UUID REFERENCES questions (id),
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    id             UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    question_type  VARCHAR(50) NOT NULL CHECK (question_type IN ('MULTIPLE_CHOICE', 'PARSONS')),
+    difficulty     VARCHAR(50) NOT NULL CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
+    status         VARCHAR(50) NOT NULL CHECK (status IN ('DRAFT', 'REVIEWED', 'PUBLISHED', 'RETIRED')),
+    pool           VARCHAR(50) NOT NULL CHECK (pool IN ('QUIZ', 'CONTEST')),
+    lesson_id      UUID REFERENCES lessons (id) ON DELETE RESTRICT,
+    prompt         TEXT        NOT NULL,
+    explanation_en TEXT,
+    explanation_ar TEXT,
+    hint_en        TEXT,
+    hint_ar        TEXT,
+    language       VARCHAR(50),
+    source         VARCHAR(255),
+    replaces_id    UUID REFERENCES questions (id),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT chk_question_pool_lesson CHECK (
         (pool = 'QUIZ' AND lesson_id IS NOT NULL) OR
         (pool = 'CONTEST' AND lesson_id IS NULL)
-        )
+        ),
+    CONSTRAINT chk_questions_hint_quiz_only CHECK (pool = 'QUIZ' OR (hint_en IS NULL AND hint_ar IS NULL))
 );
 CREATE INDEX idx_questions_pool_status_difficulty ON questions (pool, status, difficulty);
 CREATE INDEX idx_questions_lesson_id ON questions (lesson_id);

@@ -17,7 +17,7 @@ CREATE TABLE example_code_variants
 (
     example_id  UUID        NOT NULL REFERENCES lesson_examples (id) ON DELETE CASCADE,
     language    VARCHAR(50) NOT NULL
-        CONSTRAINT chk_example_code_variants_language CHECK (language IN ('CPP', 'JAVA', 'PYTHON')),
+        CONSTRAINT chk_example_code_variants_language CHECK (language IN ('C','CPP', 'JAVA', 'PYTHON','SHELL')),
     source_code TEXT        NOT NULL,
     output      TEXT        NOT NULL,
     PRIMARY KEY (example_id, language)
