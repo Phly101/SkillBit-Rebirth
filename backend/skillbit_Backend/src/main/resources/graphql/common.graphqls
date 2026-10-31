@@ -4,7 +4,7 @@
 
 # On the Spring side register ExtendedScalars.DateTime (graphql-java-extended-scalars).
 scalar DateTime
-
+scalar JSON
 enum ContestStatus {
   UPCOMING
   LIVE
