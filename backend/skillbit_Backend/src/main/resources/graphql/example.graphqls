@@ -2,7 +2,7 @@
 # Read-only content. Nothing here changes progress or points.
 
 # On the Spring side register ExtendedScalars.Json (graphql-java-extended-scalars), next to DateTime.
-scalar JSON
+
 
 enum CodeLanguage {
   C
