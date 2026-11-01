@@ -2,12 +2,11 @@
 
 The Flutter app for SkillBit-Rebirth, a gamified, competitive learning platform: courses, quizzes, contests, friendly matches, a global leaderboard, badges and achievements.
 
-The backend lives in `Backend/skillbit_Backend` (Spring Boot). API contracts are in `Docs/` (OpenAPI for REST, GraphQL schema files, WebSocket events).
+The backend lives in `../Backend/skillbit_Backend` (Spring Boot). API contracts are in `../Docs/` (OpenAPI for REST, GraphQL schema files, WebSocket events).
 
 ## Getting started
 
 ```bash
-cd mobile
 flutter pub get
 flutter run
 ```
@@ -111,6 +110,7 @@ mobile: add login screen
 mobile: fix overflow on contest results
 backend: add login endpoint
 docs: update openapi
+ci: add workflow
 ```
 
 ### Pull requests
