@@ -20,6 +20,7 @@ jobs:
       - name: Set up flutter
         uses: subosito/flutter-action@v2
         with:
+          #check if environment key is in the pubspec.yaml so that this doesn't fail
           channel: stable
           flutter-version-file: mobile/pubspec.yaml
       - run: flutter --version
@@ -33,5 +34,7 @@ jobs:
         run: flutter analyze
 
       - name: Flutter test
+        # Skipped until the first test file exists. Remove this condition once every feature ships with tests.
+        if: hashFiles('mobile/test/**/*_test.dart') != ''
         run: flutter test
 
