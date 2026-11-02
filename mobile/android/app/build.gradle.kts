@@ -28,6 +28,22 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    buildFeatures{
+        resValues =true
+    }
+    flavorDimensions += "default"
+    productFlavors {
+        create("development") {
+            dimension = "default"
+            applicationIdSuffix = ".development"
+            resValue("string", "app_name","SkillBit Dev")
+        }
+        create("production") {
+            dimension = "default"
+            applicationIdSuffix = ".production"
+            resValue("string", "app_name","SkillBit prod")
+        }
+    }
 
     buildTypes {
         release {
