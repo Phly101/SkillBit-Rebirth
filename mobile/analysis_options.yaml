@@ -37,6 +37,7 @@ linter:
     sort_pub_dependencies: true
     avoid_unnecessary_containers: true
     prefer_const_literals_to_create_immutables: true
+    no_default_cases: false
 
     # ERROR PREVENTION
     cancel_subscriptions: true
