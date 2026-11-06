@@ -9,7 +9,8 @@
 - [ ] mobile (Flutter)
 - [ ] backend (Spring Boot)
 - [ ] docs
-- [ ] ci (workflows, repo settings)
+- [ ] ci (workflows, rulesets, templates)
+- [ ] repo (root files and shared config, e.g. `.env.example`, `.gitignore`)
 
 ## Related feature / issue
 
@@ -26,8 +27,8 @@
 ## Checklist: everyone
 
 - [ ] The PR is small and about one thing
-- [ ] The branch name is `<stack>/<type>/<name>` (stack: `mobile`, `backend`, `docs` or `ci`; type: `feature`, `fix` or `setup`)
-- [ ] Commit messages start with `mobile:`, `backend:`, `docs:` or `ci:`
+- [ ] The branch name is `<stack>/<type>/<name>` (stack: `mobile`, `backend`, `docs`, `ci` or `repo`; type: `feature`, `fix` or `setup`)
+- [ ] Commit messages start with `mobile:`, `backend:`, `docs:`, `ci:` or `repo:`
 - [ ] Any AI-written code is marked with the `AI-GENERATED` comment
 - [ ] No secrets or `.env` files are committed
 - [ ] Docs or README updated if needed
@@ -53,7 +54,7 @@
 
 ## Checklist: ci only
 
-<!-- Delete this section if the PR does not touch workflows or repo settings. -->
+<!-- Delete this section if the PR does not touch workflows, rulesets or templates. -->
 
 - [ ] The workflow started and finished on this PR (or a test PR)
 - [ ] Required check names in the ruleset match the job names
