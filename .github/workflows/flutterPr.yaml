@@ -12,9 +12,7 @@ concurrency:
   group: flutter-pr-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: mobile
+
 
 
 jobs:
@@ -31,13 +29,17 @@ jobs:
             mobile:
               - 'mobile/**'
               - '.github/workflows/flutterPr.yaml'
-
+  debug:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "cond=[${{ needs.changes.outputs.mobile == 'true' }}]"
 
 
 
   flutter-check:
     needs: changes
-    if: needs.changes.output.mobile == 'true'
+    if: ${{ needs.changes.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
