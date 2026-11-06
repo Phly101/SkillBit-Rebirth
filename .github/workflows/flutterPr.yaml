@@ -2,10 +2,11 @@ name: flutter PR checks
 
 on:
   pull_request:
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/flutterPr.yaml'
     branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 concurrency:
   group: flutter-pr-${{ github.ref }}
@@ -15,16 +16,38 @@ defaults:
   run:
     working-directory: mobile
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
 
+jobs:
+  changes: # new small job: "did mobile change?"
+    name: flutter-changes
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            mobile:
+              - 'mobile/**'
+              - '.github/workflows/flutterPr.yaml'
+
+
+
+
+  flutter-check:
+    needs: changes
+    if: needs.changes.output.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
     steps:
       - uses: actions/checkout@v7
       - name: Set up flutter
         uses: subosito/flutter-action@v2
         with:
-          #check if environment key is in the pubspec.yaml so that this doesn't fail
+          # check if environment key is in the pubspec.yaml so that this doesn't fail
           channel: stable
           flutter-version-file: mobile/pubspec.yaml
           cache: true
