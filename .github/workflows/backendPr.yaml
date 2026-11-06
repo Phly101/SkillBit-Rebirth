@@ -1,0 +1,78 @@
+name: backend PR checks
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: backend-pr-${{ github.ref }}
+  cancel-in-progress: true
+
+
+
+
+jobs:
+  changes: # new small job: "did backend change?"
+    name: backend-changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/backendPr.yaml'
+
+   
+
+
+
+  backend-check:
+    name: backend-check
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: ci_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST_DEV: localhost
+      DB_PORT_DEV: 5432
+      DB_NAME_DEV: ci_db
+      DB_USER_DEV: ci_user
+      DB_PASSWORD_DEV: ci_password
+      SPRING_PROFILES_ACTIVE: dev
+    defaults:
+      run:
+        working-directory: backend/skillbit_Backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/skillbit_Backend/pom.xml
+      - run: java --version
+      - run: ./mvnw -B verify
+
+
