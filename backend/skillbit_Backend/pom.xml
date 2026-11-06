@@ -19,7 +19,7 @@
     <description>SkillBit-Rebirth backend</description>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
     </properties>
 
