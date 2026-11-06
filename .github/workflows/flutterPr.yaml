@@ -29,11 +29,7 @@ jobs:
             mobile:
               - 'mobile/**'
               - '.github/workflows/flutterPr.yaml'
-  debug:
-    needs: changes
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "cond=[${{ needs.changes.outputs.mobile == 'true' }}]"
+
 
 
 
