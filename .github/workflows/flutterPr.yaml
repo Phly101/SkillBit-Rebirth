@@ -12,9 +12,7 @@ concurrency:
   group: flutter-pr-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: mobile
+
 
 
 jobs:
@@ -35,7 +33,7 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     steps:
-      - run: echo "value=[${{ needs.changes.outputs.mobile }}]"
+      - run: echo "cond=[${{ needs.changes.outputs.mobile == 'true' }}]"
 
 
 
