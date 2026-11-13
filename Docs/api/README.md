@@ -16,7 +16,7 @@ design discussion, **[proposed]** is a suggestion to confirm.
 ## Conventions
 
 - **Base paths:** REST under `/api/v1`, GraphQL at `/graphql`, socket at `/ws`.
-- **Auth:** one JWT (access + refresh) used for all three transports. REST and GraphQL send it as
+- **Auth:** one JWT (access) used for all three transports. REST and GraphQL send it as
   `Authorization: Bearer <token>`. The socket validates it during the handshake. The one exception
   is the RevenueCat webhook, which uses a shared secret instead (see Cosmetics and purchases).
 - **Timestamps:** ISO-8601 UTC. **IDs:** opaque strings in the API, even if they are numeric in the

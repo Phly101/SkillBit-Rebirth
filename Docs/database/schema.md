@@ -35,22 +35,24 @@ Files live in `Backend/skillbit_Backend/src/main/resources/db/migration/` and ar
 (two underscores). Group by feature, in foreign-key order: a file may only reference tables created in an earlier file
 or in itself.
 
-| File                        | Contains                                                                                                      | Depends on                 | Why it is its own file                                                                                |
-|-----------------------------|---------------------------------------------------------------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------|
-| `V1__extensions`            | trigram extension                                                                                             | nothing                    | Needs privileges the app user may lack. If it fails you know at once and nothing else is half applied |
-| `V2__badges`                | badges                                                                                                        | nothing                    | Configuration table that users point to                                                               |
-| `V3__users_and_auth`        | users, social identities, refresh tokens, OTP codes, reset tokens                                             | V2                         | The auth feature. You can start coding signup and login as soon as this exists                        |
-| `V4__seed_badges`           | the five badge rows                                                                                           | V2                         | Required reference data. Kept apart from structure because it changes for different reasons           |
-| `V5__learning_content`      | levels, courses, sections, lessons, topics, lesson-topics, roadmaps, course-roadmaps,quizzes                  | nothing from earlier files | Authored content, filled by the importer                                                              |
-| `V6__learner_progress`      | enrollments, lesson completions                                                                               | V3, V5                     | User-generated data, with a different lifecycle from content                                          |
-| `V7__questions_and_quizzes` | questions, question topics, options, blocks, quiz questions                                                   | V5                         | The question bank and section-quiz question lists                                                     |
-| `V8__contests`              | contests, contest entries, contest questions                                                                  | V2, V3, V7                 | The contest feature, including its results                                                            |
-| `V9__social`                | friendships, friend requests, friendly matches, match topics, match questions                                 | V3, V7                     | **Before attempts**, because an attempt can point at a friendly match                                 |
-| `V10__attempts_and_points`  | quiz attempts, contest attempts, friendly match attempts, a served-questions snapshot per kind, points ledger | V3, V5, V7, V8, V9         | Everything produced by answering questions                                                            |
-| `V11__achievements`         | achievements, user achievements                                                                               | V3                         | Independent feature                                                                                   |
-| `V12__store_and_payments`   | payment events, cosmetic items, donation products, user cosmetics, equipped cosmetics                         | V3                         | Independent feature                                                                                   |
-| `V13__interactive_examples` | lesson examples, example code variants, example visualizations                                                | V5                         | Optional teaching layer on top of lessons. Content comes from the importer                            |
-| `V14__admins`               | admins                                                                                                        | V3                         | Independent feature. An admin is a normal user plus one row here                                      |
+| File                             | Contains                                                                                                      | Depends on                 | Why it is its own file                                                                                |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------|
+| `V1__extensions`                 | trigram extension                                                                                             | nothing                    | Needs privileges the app user may lack. If it fails you know at once and nothing else is half applied |
+| `V2__badges`                     | badges                                                                                                        | nothing                    | Configuration table that users point to                                                               |
+| `V3__users_and_auth`             | users, social identities, refresh tokens, OTP codes, reset tokens                                             | V2                         | The auth feature. You can start coding signup and login as soon as this exists                        |
+| `V4__seed_badges`                | the five badge rows                                                                                           | V2                         | Required reference data. Kept apart from structure because it changes for different reasons           |
+| `V5__learning_content`           | levels, courses, sections, lessons, topics, lesson-topics, roadmaps, course-roadmaps,quizzes                  | nothing from earlier files | Authored content, filled by the importer                                                              |
+| `V6__learner_progress`           | enrollments, lesson completions                                                                               | V3, V5                     | User-generated data, with a different lifecycle from content                                          |
+| `V7__questions_and_quizzes`      | questions, question topics, options, blocks, quiz questions                                                   | V5                         | The question bank and section-quiz question lists                                                     |
+| `V8__contests`                   | contests, contest entries, contest questions                                                                  | V2, V3, V7                 | The contest feature, including its results                                                            |
+| `V9__social`                     | friendships, friend requests, friendly matches, match topics, match questions                                 | V3, V7                     | **Before attempts**, because an attempt can point at a friendly match                                 |
+| `V10__attempts_and_points`       | quiz attempts, contest attempts, friendly match attempts, a served-questions snapshot per kind, points ledger | V3, V5, V7, V8, V9         | Everything produced by answering questions                                                            |
+| `V11__achievements`              | achievements, user achievements                                                                               | V3                         | Independent feature                                                                                   |
+| `V12__store_and_payments`        | payment events, cosmetic items, donation products, user cosmetics, equipped cosmetics                         | V3                         | Independent feature                                                                                   |
+| `V13__interactive_examples`      | lesson examples, example code variants, example visualizations                                                | V5                         | Optional teaching layer on top of lessons. Content comes from the importer                            |
+| `V14__admins`                    | admins                                                                                                        | V3                         | Independent feature. An admin is a normal user plus one row here                                      |
+| `V15__refresh_token_replacement` | a link from each refresh token to the one that replaced it                                                    | V3                         | Token rotation with theft detection. V3 is already applied, so this is a new file                     |
+| `V16__unique_user_name`          | a unique index on `lower(name)` for users                                                                     | V3                         | Names are unique, ignoring case. Fails if two users already share a name, so check the data first     |
 
 Content (courses, lessons, questions, topics, lesson examples, achievements, cosmetics) is **not** loaded by migrations. It comes from
 the importer, which upserts by a stable slug. Only data the app cannot run without (the badges) is a migration.
@@ -76,7 +78,7 @@ Rules for writing them:
   total points, current badge, supporter flag, and whether the email is verified.
 - The name is both the display name and what the Choose name screen edits (there is no separate username). Because it is
   unique, search can show it without a second identifier. Add a unique index on `lower(name)` named `uk_users_name_lower`
-  in the users migration (the case-insensitive rule is [proposed]). The trigram index for search stays as it is.
+  in a new migration, V16, because V3 is already applied and cannot be edited (the case-insensitive rule is [proposed]). The trigram index for search stays as it is.
 - Social identities (Google, GitHub), unique per provider account, many per user.
 - Refresh tokens (store only a hash, support rotation and revocation), OTP codes (purpose, hashed code, expiry,
   wrong-guess counter, used or not, and the new address for an email change), password reset tokens.
@@ -271,7 +273,7 @@ The application and the seed validator must keep these:
 
 ## Diagrams
 
-Can be found in [`../diagrams/db_digrams`](../diagrams/db_digrams/users_auth_badges.md)
+Can be found in ['../diagrams'](../diagrams/db_digrams/users_auth_badges.md)
 
 ## Open questions
 
@@ -279,5 +281,5 @@ Can be found in [`../diagrams/db_digrams`](../diagrams/db_digrams/users_auth_bad
 2. **Badge icon files:** bundled in the Flutter app's assets, or served from the backend's static folder? The database
    only stores the relative path.
    lifecycle above.
-3. **Refresh token rotation:** does a token need a link to the one that replaced it?
+3. ~~**Refresh token rotation**~~ **[decided]** Yes: each refresh token records the one that replaced it (`replaced_by_id`, V15). Refresh tokens last 30 days.
 4. **Admin API:** which endpoints the desktop admin app needs and how the admin role is carried in the token. Not needed for the player app.
