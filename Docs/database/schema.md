@@ -91,7 +91,7 @@ Rules for writing them:
   The multiplier is applied when you seed the data, so the schema just holds the final amount.
 - A course has ordered **sections**. A section has ordered **lessons** and one quiz (`quizzes.section_id` is required
   and unique, so a quiz exists only inside a course and a section has at most one).
-- A lesson has a title and a description. Its outside links live in `lesson_resources` (V15): one row per language
+- A lesson has a title and a description. It's outside links live in `lesson_resources` (V15): one row per language
   (`AR` or `EN`) and type (`VIDEO` or `ARTICLE`), so a lesson has at most one video and one article per language. **Every
   lesson needs at least one resource.** That rule spans two tables, so the database cannot enforce it and the importer's
   validator does.
@@ -271,7 +271,7 @@ The application and the seed validator must keep these:
 
 ## Diagrams
 
-Can be found in ['../diagrams'](../diagrams)
+Can be found in [`../diagrams/db_digrams`](../diagrams/db_digrams/users_auth_badges.md)
 
 ## Open questions
 
