@@ -72,8 +72,11 @@ Rules for writing them:
 
 - Exactly five badges: tier 1 to 5, name, icon, the points needed for promotion, and a lower points value below which a
   user is demoted (the buffer). Data, seeded later.
-- Users: unique lowercase email, optional password (social-only accounts have none), name, avatar storage key, cached
+- Users: unique lowercase email, optional password (social-only accounts have none), a name that is unique ignoring upper and lower case, avatar storage key, cached
   total points, current badge, supporter flag, and whether the email is verified.
+- The name is both the display name and what the Choose name screen edits (there is no separate username). Because it is
+  unique, search can show it without a second identifier. Add a unique index on `lower(name)` named `uk_users_name_lower`
+  in the users migration (the case-insensitive rule is [proposed]). The trigram index for search stays as it is.
 - Social identities (Google, GitHub), unique per provider account, many per user.
 - Refresh tokens (store only a hash, support rotation and revocation), OTP codes (purpose, hashed code, expiry,
   wrong-guess counter, used or not, and the new address for an email change), password reset tokens.
@@ -246,6 +249,10 @@ The application and the seed validator must keep these:
 - An attempt's question count equals the number of questions in its snapshot.
 - Expired-but-unused OTP codes must be marked used (or deleted) before a new code is issued, because only one unused
   code per user and purpose is allowed.
+- Every new account gets a unique default name (the part of the email before the `@`, or the Google or GitHub profile
+  name, with a number added when it is taken). The unique index on `lower(name)` is the last line of defence: two requests
+  can pick the same free name at the same moment, so the service must handle the unique-violation error and retry or
+  answer `409 NAME_TAKEN`.
 - Accepting a friend request creates the friendship row (in the same transaction). The friendly match winner is decided
   by the scoring rules from each player's attempt (empty on a tie).
 - A contest attempt or friendly match may only start while the match or contest is in its valid state, and a quiz result

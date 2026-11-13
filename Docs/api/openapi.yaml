@@ -29,11 +29,15 @@ paths:
       tags: [ Auth ]
       security: [ ]
       summary: Create an account and send a verification OTP
+      description: |
+        Takes only an email and a password. The server gives the account a unique default name (built from
+        the part of the email before the `@`, with a number added if that name is taken). After verifying the
+        OTP the app shows the Choose name screen, pre-filled with it, and saves the choice with `PATCH /me/profile`.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SignupRequest' } } } }
       responses:
         '202': { description: 'Account created, OTP sent', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
         '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /auth/login:
     post:
       operationId: login
@@ -52,9 +56,12 @@ paths:
       tags: [ Auth ]
       security: [ ]
       summary: Sign in with Google (exchange an ID token)
+      description: |
+        `isNewUser` is true when this call created the account. The server then sets a unique default name
+        from the Google profile name, and the app shows the Choose name screen.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GoogleLoginRequest' } } } }
       responses:
-        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/SocialLoginResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /auth/github:
     post:
@@ -62,9 +69,12 @@ paths:
       tags: [ Auth ]
       security: [ ]
       summary: Sign in with GitHub (exchange an authorization code)
+      description: |
+        `isNewUser` is true when this call created the account. The server then sets a unique default name
+        from the GitHub profile name, and the app shows the Choose name screen.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/GithubLoginRequest' } } } }
       responses:
-        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/TokenPair' } } } }
+        '200': { description: 'Logged in', content: { application/json: { schema: { $ref: '#/components/schemas/SocialLoginResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /auth/otp/send:
     post:
@@ -122,7 +132,6 @@ paths:
       responses:
         '204': { description: 'Password changed' }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '422': { $ref: '#/components/responses/ValidationError' }
   /auth/refresh:
     post:
       operationId: refreshTokens
@@ -149,12 +158,15 @@ paths:
       operationId: updateProfile
       tags: [ Account ]
       summary: Change name
-      description: On success the server emits a `profile.updated` socket event.
+      description: |
+        Names are unique, ignoring upper and lower case. Answers 409 NAME_TAKEN if someone else already has
+        the name. On success the server emits a `profile.updated` socket event.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateProfileRequest' } } } }
       responses:
         '200': { description: 'Updated', content: { application/json: { schema: { $ref: '#/components/schemas/ProfileResponse' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /me/avatar:
     put:
       operationId: updateAvatar
@@ -188,7 +200,7 @@ paths:
         '202': { description: 'OTP sent to the new address', content: { application/json: { schema: { $ref: '#/components/schemas/OtpSent' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /me/password-change:
     post:
       operationId: changePassword
@@ -198,7 +210,7 @@ paths:
       responses:
         '204': { description: 'Password changed' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
 
   # ------------------------------------------------------------- Courses
   /courses/{courseId}/enroll:
@@ -318,7 +330,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /attempts/{attemptId}/answers/{questionId}:
     put:
       operationId: saveAnswer
@@ -337,7 +349,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
   /attempts/{attemptId}/restart:
     post:
       operationId: restartAttempt
@@ -428,13 +440,13 @@ paths:
       description: |
         The host chooses the topics, the number of questions and the time limit, within limits configured on
         the server (available in GraphQL as `friendMatchLimits`). The server picks a random set of questions
-        from the contest pool for those topics, the same set for both players. Returns 422 if a setting is
+        from the contest pool for those topics, the same set for both players. Returns 400 if a setting is
         outside the limits or the topics do not have enough questions.
       parameters: [ { $ref: '#/components/parameters/UserId' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ChallengeRequest' } } } }
       responses:
         '201': { description: 'Challenge sent', content: { application/json: { schema: { $ref: '#/components/schemas/FriendMatchCreated' } } } }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -477,7 +489,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
     delete:
       operationId: unequipCosmetic
       tags: [ Cosmetics ]
@@ -538,31 +550,44 @@ components:
     Cursor: { name: cursor, in: query, schema: { type: string } }
 
   responses:
-    BadRequest: { description: 'Malformed or invalid request, for example a wrong OTP', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    BadRequest: { description: 'Input that is not acceptable: failed validation (code VALIDATION_FAILED, with details), a wrong or expired OTP, a bad reset token. Tell them apart by code, not by status', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     Unauthorized: { description: 'Missing, expired or invalid token', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     Forbidden: { description: 'Authenticated but not allowed, for example not enrolled or email not verified', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     NotFound: { description: 'Resource does not exist', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    Conflict: { description: 'State conflict, for example email taken or attempt already submitted', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: 'State conflict, for example email taken, name taken or attempt already submitted', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     PayloadTooLarge: { description: 'Upload exceeds the size limit', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     UnsupportedMediaType: { description: 'File type not allowed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
-    ValidationError: { description: 'Request body failed validation', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     TooManyRequests: { description: 'Rate limit hit', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
 
   schemas:
     Error:
       type: object
-      required: [ code, message ]
+      description: 'Every REST error has this shape. The full list of codes is in errors.md'
+      required: [ status, code, message, timestamp, path, traceId ]
       properties:
-        code: { type: string, example: QUIZ_ALREADY_SUBMITTED, description: 'Stable machine-readable code' }
+        status: { type: integer, example: 409, description: 'Same as the HTTP status' }
+        code: { type: string, example: QUIZ_ALREADY_SUBMITTED, description: 'Stable machine-readable code. The app decides what to do from this, never from the message' }
         message: { type: string, description: 'Human-readable, may change' }
-        details: { type: object, additionalProperties: true }
+        timestamp: { type: string, format: date-time }
+        path: { type: string, example: /api/v1/auth/signup }
+        traceId: { type: string, description: 'Also written in the server log, so a report can be traced' }
+        details:
+          type: array
+          description: 'Only present on validation failures (400, code VALIDATION_FAILED)'
+          items: { $ref: '#/components/schemas/FieldViolation' }
+    FieldViolation:
+      type: object
+      required: [ field, message ]
+      properties:
+        field: { type: string, example: password }
+        message: { type: string, example: 'size must be between 8 and 72' }
 
     # ---- auth
     SignupRequest:
       type: object
-      required: [ name, email, password ]
+      description: 'No name here. The server gives the account a unique default name; the user changes it on the Choose name screen'
+      required: [ email, password ]
       properties:
-        name: { type: string, minLength: 2, maxLength: 50 }
         email: { type: string, format: email }
         password: { type: string, minLength: 8, maxLength: 72, format: password }
     LoginRequest:
@@ -607,6 +632,7 @@ components:
       properties:
         tokens: { allOf: [ { $ref: '#/components/schemas/TokenPair' } ], description: 'Present for SIGNUP' }
         resetToken: { type: string, description: 'Present for PASSWORD_RESET' }
+        isNewUser: { type: boolean, description: 'Present for SIGNUP and always true, so the app uses the same Choose name check as social sign-in' }
     ForgotPasswordRequest:
       type: object
       required: [ email ]
@@ -630,6 +656,13 @@ components:
         accessToken: { type: string }
         refreshToken: { type: string }
         expiresInSeconds: { type: integer, example: 900 }
+    SocialLoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/TokenPair'
+        - type: object
+          required: [ isNewUser ]
+          properties:
+            isNewUser: { type: boolean, description: 'True when this sign-in created the account. The app then shows the Choose name screen' }
 
     # ---- account
     UpdateProfileRequest:
@@ -712,7 +745,7 @@ components:
           items: { $ref: '#/components/schemas/Answer' }
     AnswerValue:
       type: object
-      description: 'Send the field that matches the question type. The other field must be absent, otherwise 422.'
+      description: 'Send the field that matches the question type. The other field must be absent, otherwise 400.'
       properties:
         selectedOptionId: { type: string, nullable: true, description: 'MULTIPLE_CHOICE. Null means skipped.' }
         orderedBlockIds:
