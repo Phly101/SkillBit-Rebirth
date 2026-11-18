@@ -72,9 +72,10 @@ public class RefreshTokenService {
         IssuedRefreshToken newToken = issueToken(old.getUserId());
         old.setReplacedById(newToken.id());
         old.setRevoked(true);
-
+        
         String accessToken = accessTokenGenerator.createAccessToken(old.getUserId());
-        return new TokenPair(accessToken, newToken.rawToken());
+        return new TokenPair(accessToken, newToken.rawToken(),
+        authProperties.accessTokenLifetime().toSeconds()); 
 
     }
 
