@@ -146,11 +146,17 @@ paths:
     post:
       operationId: logout
       tags: [ Auth ]
+      security: [ ]
       summary: Revoke the refresh token
+      description: |
+        Public on purpose: the refresh token in the body is the proof of identity, so logout still works
+        when the access token has already expired. Idempotent: an unknown, expired or already revoked token
+        also answers 204, so the app can always clear its local tokens and show the login screen.
+        A token that was already rotated is treated as theft and all of that user's refresh tokens are revoked.
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RefreshRequest' } } } }
       responses:
         '204': { description: 'Logged out' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '400': { $ref: '#/components/responses/BadRequest' }
 
   # ------------------------------------------------------------- Account
   /me/profile:

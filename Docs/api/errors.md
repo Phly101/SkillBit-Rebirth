@@ -40,19 +40,22 @@ These come from the exception types in `common`. Check the codes against the `Er
 
 ## Auth
 
-| Code                    | Status | When                                                                                       | Endpoints                                 | Source   |
-|-------------------------|--------|--------------------------------------------------------------------------------------------|-------------------------------------------|----------|
-| `EMAIL_TAKEN`           | 409    | The email already belongs to an account                                                    | `/auth/signup`, `/me/email-change`        | proposed |
-| `INVALID_CREDENTIALS`   | 401    | Wrong email or wrong password. One code for both, so nobody can learn which emails exist   | `/auth/login`                             | proposed |
-| `EMAIL_NOT_VERIFIED`    | 403    | Correct credentials, but the email was never verified                                      | `/auth/login`                             | proposed |
-| `OTP_INVALID`           | 400    | The code does not match                                                                    | `/auth/verify`                            | proposed |
-| `OTP_EXPIRED`           | 400    | The code was right but too old, or already used                                            | `/auth/verify`                            | proposed |
-| `OTP_ATTEMPTS_EXCEEDED` | 429    | Too many wrong guesses. The user must ask for a new code                                   | `/auth/verify`                            | proposed |
-| `OTP_RESEND_TOO_SOON`   | 429    | A new code was requested before `resendAfterSeconds` passed                                | `/auth/otp/send`, `/auth/otp/resend`      | proposed |
-| `RESET_TOKEN_INVALID`   | 400    | The reset token is unknown, expired or already used                                        | `/auth/reset-password`                    | proposed |
-| `REFRESH_TOKEN_INVALID` | 401    | The refresh token is unknown, expired or revoked. The app must send the user back to login | `/auth/refresh`, `/auth/logout`           | proposed |
-| `SOCIAL_TOKEN_INVALID`  | 401    | Google rejected the ID token, or GitHub rejected the code                                  | `/auth/google`, `/auth/github`            | proposed |
-| `PASSWORD_INCORRECT`    | 400    | The current password the user typed to confirm a change is wrong                           | `/me/email-change`, `/me/password-change` | proposed |
+| Code                    | Status | When                                                                                                                                                                    | Endpoints                                 | Source   |
+|-------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|----------|
+| `EMAIL_TAKEN`           | 409    | The email already belongs to an account                                                                                                                                 | `/auth/signup`, `/me/email-change`        | proposed |
+| `INVALID_CREDENTIALS`   | 401    | Wrong email or wrong password. One code for both, so nobody can learn which emails exist                                                                                | `/auth/login`                             | proposed |
+| `EMAIL_NOT_VERIFIED`    | 403    | Correct credentials, but the email was never verified                                                                                                                   | `/auth/login`                             | proposed |
+| `OTP_INVALID`           | 400    | The code does not match                                                                                                                                                 | `/auth/verify`                            | proposed |
+| `OTP_EXPIRED`           | 400    | The code was right but too old, or already used                                                                                                                         | `/auth/verify`                            | proposed |
+| `OTP_ATTEMPTS_EXCEEDED` | 429    | Too many wrong guesses. The user must ask for a new code                                                                                                                | `/auth/verify`                            | proposed |
+| `OTP_RESEND_TOO_SOON`   | 429    | A new code was requested before `resendAfterSeconds` passed                                                                                                             | `/auth/otp/send`, `/auth/otp/resend`      | proposed |
+| `RESET_TOKEN_INVALID`   | 400    | The reset token is unknown, expired or already used                                                                                                                     | `/auth/reset-password`                    | proposed |
+| `REFRESH_TOKEN_INVALID` | 401    | The refresh token is unknown, expired or revoked. The app must send the user back to login                                                                              | `/auth/refresh`, `/auth/logout`           | proposed |
+| `SOCIAL_TOKEN_INVALID`  | 401    | Google rejected the ID token, or GitHub rejected the code                                                                                                               | `/auth/google`, `/auth/github`            | proposed |
+| `PASSWORD_INCORRECT`    | 400    | The current password the user typed to confirm a change is wrong                                                                                                        | `/me/email-change`, `/me/password-change` | proposed |
+| `REFRESH_TOKEN_INVALID` | 401    | The refresh token is unknown, or was revoked by logout. The app must send the user back to login                                                                        | `/auth/refresh`                           | proposed |
+| `REFRESH_TOKEN_EXPIRED` | 401    | The refresh token passed its 30 days without being used. The app must send the user back to login                                                                       | `/auth/refresh`                           | proposed |
+| `REFRESH_TOKEN_REUSED`  | 401    | A token that was already rotated was used again, which is treated as theft. All of that user's refresh tokens are revoked, and the app must send the user back to login | `/auth/refresh`                           | proposed |
 
 ## Account
 
