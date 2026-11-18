@@ -213,6 +213,7 @@ class RefreshTokenServiceTest {
                         verify(refreshTokenRepo, never()).revokeAllActiveTokensByUserId(any());
                         verify(refreshTokenRepo, never()).save(any());
                 }
+
                 // AI Generated with claude and reviewed by Basel(Me)
                 @Test
                 void rotate_alreadyRotatedToken_revokesAllUserTokensAndThrowsReused() {
@@ -260,5 +261,91 @@ class RefreshTokenServiceTest {
                         assertEquals(ACCESS_TOKEN, result.accessToken());
                         assertEquals(RAW_TOKEN, result.refreshToken());
                 }
+        }
+
+        @Nested
+        class LogoutTest {
+
+                @Test
+                void logout_doesNothing_whenTokenIsNotFound() {
+                       // Arrange{
+                        when(sha256Hasher.hash(OLD_RAW_TOKEN)).thenReturn(OLD_TOKEN_HASH);
+                        when(refreshTokenRepo.findByTokenHash(OLD_TOKEN_HASH)).thenReturn(Optional.empty());
+
+                        // Act
+                        refreshTokenService.logout(OLD_RAW_TOKEN);
+
+                        // Assert
+                        verify(refreshTokenRepo, never()).revokeAllActiveTokensByUserId(any());
+                        verify(refreshTokenRepo,never()).save(any());
+                }
+
+                @Test
+                void logout_revokesActiveToken() {
+                        // Arrange
+                        RefreshTokenEntity token = oldToken(NOW.plus(LIFETIME), false, null);
+
+                        stubOldTokenLookup(token);
+
+                        // Act
+                        refreshTokenService.logout(OLD_RAW_TOKEN);
+
+                        // Assert
+                        assertTrue(token.isRevoked());
+                        verify(refreshTokenRepo, never()).revokeAllActiveTokensByUserId(any());
+                }
+
+                @Test
+                void logout_revokesExpiredToken() {
+                        // Arrange
+                        RefreshTokenEntity token = oldToken(NOW.minus(LIFETIME), false, null);
+                        stubOldTokenLookup(token);
+
+                        // Act
+                        refreshTokenService.logout(OLD_RAW_TOKEN);
+
+                        // Assert
+                        assertTrue(token.isRevoked());
+                        verify(refreshTokenRepo, never()).revokeAllActiveTokensByUserId(any());
+                }
+
+                @Test
+                void logout_doesNothing_whenTokenWasAlreadyRevokedByLogout() {
+                        // Arrange
+                        RefreshTokenEntity token = oldToken(NOW.plus(LIFETIME), true, null);
+
+                        stubOldTokenLookup(token);
+
+                        // Act
+                        refreshTokenService.logout(OLD_RAW_TOKEN);
+
+                        // Assert
+                        assertTrue(token.isRevoked());
+                        assertNull(token.getReplacedById());
+
+                        verify(refreshTokenRepo, never())
+                                        .revokeAllActiveTokensByUserId(any());
+                }
+
+                @Test
+                void logout_revokesAllActiveTokens_whenTokenWasAlreadyRotated() {
+                        // Arrange
+                        UUID replacementTokenId = UUID.randomUUID();
+
+                        RefreshTokenEntity token = oldToken(NOW.plus(LIFETIME), true, replacementTokenId);
+
+                        stubOldTokenLookup(token);
+
+                        // Act
+                        refreshTokenService.logout(OLD_RAW_TOKEN);
+
+                        // Assert
+                        assertTrue(token.isRevoked());
+                        assertEquals(replacementTokenId, token.getReplacedById());
+
+                        verify(refreshTokenRepo)
+                                        .revokeAllActiveTokensByUserId(USER_ID);
+                }
+
         }
 }
