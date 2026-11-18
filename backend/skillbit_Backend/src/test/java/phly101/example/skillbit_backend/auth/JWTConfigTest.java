@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.jwt.JwtValidationException;
 import phly101.example.skillbit_backend.auth.config.AuthProperties;
 import phly101.example.skillbit_backend.auth.config.JWTConfig;
 import phly101.example.skillbit_backend.auth.constants.AuthConsts;
-import phly101.example.skillbit_backend.auth.service.AccessTokenService;
+import phly101.example.skillbit_backend.auth.service.AccessTokenGenerator;
 
 class JwtTokenTest {
 
@@ -31,11 +31,11 @@ class JwtTokenTest {
     private static final UUID USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
     private JWTConfig jwtConfig;
-    private AccessTokenService tokenService;
+    private AccessTokenGenerator tokenService;
 
-    private AccessTokenService serviceWith(AuthProperties properties) {
+    private AccessTokenGenerator serviceWith(AuthProperties properties) {
         JWTConfig config = new JWTConfig(properties);
-        return new AccessTokenService(properties, config.jwtEncoder());
+        return new AccessTokenGenerator(properties, config.jwtEncoder());
     }
 
     @BeforeEach

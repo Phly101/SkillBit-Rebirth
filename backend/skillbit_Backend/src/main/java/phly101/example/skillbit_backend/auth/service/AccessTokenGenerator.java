@@ -14,11 +14,11 @@ import phly101.example.skillbit_backend.auth.config.AuthProperties;
 import phly101.example.skillbit_backend.auth.constants.AuthConsts;
 
 @Service
-public class AccessTokenService {
+public class AccessTokenGenerator {
     private final AuthProperties authProperties;
     private final JwtEncoder jwtEncoder;
 
-    public AccessTokenService(AuthProperties authProperties, JwtEncoder jwtEncoder) {
+    public AccessTokenGenerator(AuthProperties authProperties, JwtEncoder jwtEncoder) {
         this.authProperties = authProperties;
         this.jwtEncoder = jwtEncoder;
     }
