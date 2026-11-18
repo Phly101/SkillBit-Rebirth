@@ -78,4 +78,29 @@ public class RefreshTokenService {
 
     }
 
+@Transactional
+public void logout(String rawToken) {
+     String tokenHash = sha256Hasher.hash(rawToken);
+    RefreshTokenEntity token =
+            refreshTokenRepo.findByTokenHash(tokenHash).orElse(null);
+
+    if (token == null) {
+        return;
+    }
+
+    // Token was already rotated and is being reused.
+    if (token.isRevoked() && token.getReplacedById() != null) {
+        refreshTokenRepo.revokeAllActiveTokensByUserId(token.getUserId());
+        return;
+    }
+
+    // Already revoked by logout. Nothing to do.
+    if (token.isRevoked()) {
+        return;
+    }
+
+    // Active or expired token.
+    token.setRevoked(true);
+}
+
 }
