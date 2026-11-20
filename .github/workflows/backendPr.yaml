@@ -60,6 +60,7 @@ jobs:
       DB_NAME_DEV: ci_db
       DB_USER_DEV: ci_user
       DB_PASSWORD_DEV: ci_password
+      JWT_SECRET: 4b88860f90320507caa194bbcd6ad08a0c810bf4784a39710849ba1767d00daf
       SPRING_PROFILES_ACTIVE: dev
     defaults:
       run:

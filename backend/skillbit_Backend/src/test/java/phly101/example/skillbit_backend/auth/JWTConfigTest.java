@@ -53,7 +53,7 @@ class JwtTokenTest {
         Jwt jwt = jwtConfig.jwtDecoder().decode(token);
 
         assertEquals(USER_ID.toString(), jwt.getSubject());
-        assertEquals(AuthConsts.issuer, jwt.getClaimAsString("iss"));
+        assertEquals(AuthConsts.ISSUER, jwt.getClaimAsString("iss"));
         assertEquals(MacAlgorithm.HS256.getName(), jwt.getHeaders().get("alg"));
         assertEquals(Duration.ofMinutes(15),
                 Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()));
@@ -75,7 +75,7 @@ class JwtTokenTest {
     void decoderRejectsExpiredToken() {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(AuthConsts.issuer)
+                .issuer(AuthConsts.ISSUER)
                 .issuedAt(now.minus(Duration.ofMinutes(10)))
                 .expiresAt(now.minus(Duration.ofMinutes(5)))
                 .subject(USER_ID.toString())

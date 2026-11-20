@@ -26,7 +26,7 @@ public class AccessTokenGenerator {
     public String createAccessToken(UUID userId) {
         var time = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(AuthConsts.issuer)
+                .issuer(AuthConsts.ISSUER)
                 .issuedAt(time)
                 .expiresAt(time.plus(authProperties.accessTokenLifetime()))
                 .subject(userId.toString())
