@@ -13,7 +13,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import jakarta.servlet.http.HttpServletRequest;
 import phly101.example.skillbit_backend.common.dto.FieldViolation;
 import phly101.example.skillbit_backend.common.dto.SkillBitErrorResponse;
@@ -91,6 +92,34 @@ public class GlobalExceptionHandler {
             return build(status, ErrorCode.BAD_REQUEST, "Request could not be processed.", request, null, ex);
         }
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, ex.getMessage(), request, null, ex);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<SkillBitErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        return build(
+                HttpStatus.FORBIDDEN,
+                ErrorCode.FORBIDDEN,
+                "Access is denied.",
+                request,
+                null,
+                ex);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<SkillBitErrorResponse> handleAuthentication(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                ErrorCode.UNAUTHORIZED,
+                "Authentication is required.",
+                request,
+                null,
+                ex);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
