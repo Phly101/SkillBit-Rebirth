@@ -8,15 +8,17 @@ import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-@Validated 
+@Validated
 @ConfigurationProperties(prefix = "app.auth")
 public record AuthProperties(
-    @NotBlank  @Size (min =32) String jwtSecret,
-    @NotNull Duration accessTokenLifetime,
-    @NotNull Duration refreshTokenLifetime
-) {
+        @NotBlank @Size(min = 32) String jwtSecret,
+        @NotNull Duration accessTokenLifetime,
+        @NotNull Duration refreshTokenLifetime,
+        @NotNull Duration otpCodeLifeTime,
+        @Positive int maxAttempts,
+        @NotNull Duration resendCooldown) {
 
-    
 }

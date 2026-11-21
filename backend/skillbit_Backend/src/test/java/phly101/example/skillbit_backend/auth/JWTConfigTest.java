@@ -41,7 +41,7 @@ class JwtTokenTest {
     @BeforeEach
     void setUp() {
         AuthProperties properties = new AuthProperties(
-                SECRET, Duration.ofMinutes(15), Duration.ofDays(30));
+                SECRET, Duration.ofMinutes(15), Duration.ofDays(30), null, 0, null);
         jwtConfig = new JWTConfig(properties);
         tokenService = serviceWith(properties);
     }
@@ -62,7 +62,7 @@ class JwtTokenTest {
     @Test
     void decoderRejectsTokenSignedWithWrongSecret() {
         AuthProperties otherProperties = new AuthProperties(
-                OTHER_SECRET, Duration.ofMinutes(15), Duration.ofDays(30));
+                OTHER_SECRET, Duration.ofMinutes(15), Duration.ofDays(30), null, 0, null);
         String token = serviceWith(otherProperties).createAccessToken(USER_ID);
         JwtDecoder decoder = jwtConfig.jwtDecoder();
 

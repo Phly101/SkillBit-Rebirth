@@ -34,7 +34,7 @@ public class RefreshTokenEntity {
     private boolean isRevoked = false;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     @Setter
     @Column(name = "replaced_by_id")
