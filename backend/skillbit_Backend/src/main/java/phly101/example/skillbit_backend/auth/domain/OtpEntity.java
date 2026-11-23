@@ -73,11 +73,13 @@ public class OtpEntity {
     public void renew(
             String codeHash,
             Instant expiresAt,
-            Instant createdAt
+            Instant createdAt,
+            String newEmail
     ) {
         this.codeHash = codeHash;
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
+        this.newEmail = newEmail;
         this.attemptsCount = 0;
         this.used = false;
     }
