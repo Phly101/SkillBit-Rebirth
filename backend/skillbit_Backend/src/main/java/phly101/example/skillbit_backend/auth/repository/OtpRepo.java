@@ -14,4 +14,5 @@ public interface OtpRepo extends JpaRepository<OtpEntity,UUID>{
 
 
 
+
 }
